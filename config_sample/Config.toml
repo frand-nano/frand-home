@@ -1,0 +1,33 @@
+[paths]
+cert = "" #cert.pem file path
+privkey = "" #privkey.pem file path
+log4rs = "./config/log4rs.yml" #log4rs.yml file path
+
+[uris]
+oauth_redirect = "" #"https://your.domain.name/oauth"
+oauth_root = "https://accounts.google.com/o/oauth2/auth"
+oauth_token = "https://oauth2.googleapis.com/token"
+oauth_userinfo = "https://www.googleapis.com/oauth2/v1/userinfo"
+oauth_scope_profile = "https://www.googleapis.com/auth/userinfo.profile"
+oauth_scope_email = "https://www.googleapis.com/auth/userinfo.email"
+youtube_playlists = "https://www.googleapis.com/youtube/v3/playlists"
+youtube_playlist_items = "https://www.googleapis.com/youtube/v3/playlistItems"
+
+[keys]
+client_id = "" #google oauth client_id
+client_secret = "" #google oauth client_secret
+session_secret = "" #64 bytes random key
+youtube_api_key = "" #youtube data api v3 key
+
+[settings]
+port = 4430
+server_whitelists = [
+    #id in [uris]oauth_userinfo
+]
+client_whitelists_all = false
+client_whitelists = [
+    #id in [uris]oauth_userinfo
+]
+playlists = [
+    #playlist_id 
+]

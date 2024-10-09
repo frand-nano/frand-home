@@ -14,7 +14,7 @@ pub trait SessionUtil {
     }
 
     fn client_whitelist(&self) -> bool {
-        CONFIG.settings.client_whitelists_all 
+        (CONFIG.settings.client_whitelists_all && self.user_id() != "user_id")
         || CONFIG.settings.client_whitelists.contains(&self.user_id())
     }
 

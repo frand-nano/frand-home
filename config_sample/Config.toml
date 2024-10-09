@@ -31,3 +31,5 @@ client_whitelists = [
 playlists = [
     #playlist_id 
 ]
+youtube_playlists_max_results = 25
+youtube_playlist_items_max_results = 25

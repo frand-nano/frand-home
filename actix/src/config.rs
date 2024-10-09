@@ -48,6 +48,8 @@ pub struct Settings {
     pub client_whitelists_all: bool,
     pub client_whitelists: Vec<String>,
     pub playlists: Vec<String>,
+    pub youtube_playlists_max_results: u32,
+    pub youtube_playlist_items_max_results: u32,
 }
 
 impl Config {

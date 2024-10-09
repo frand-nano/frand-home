@@ -3,7 +3,7 @@ use actix_session::SessionExt;
 use actix_web::{http::header::ContentType, HttpRequest, HttpResponse};
 use url::Url;
 use uuid::Uuid;
-use crate::CONFIG;
+use crate::{session::SessionUtil, CONFIG};
 
 pub async fn get_login(request: HttpRequest) -> HttpResponse {
     let session = request.get_session();
@@ -30,6 +30,9 @@ pub async fn get_login(request: HttpRequest) -> HttpResponse {
         ");         
     }
     
+    let user = session.user();
+    log::info!("{user} {} get_login", user.additional_info_text());
+
     login_button_html(state)
     .unwrap_or(HttpResponse::InternalServerError().finish())
 }
@@ -40,7 +43,17 @@ fn login_button_html(state: String) -> anyhow::Result<HttpResponse> {
     
     Ok(HttpResponse::Ok()
     .content_type(ContentType::html())
-    .body(format!("<button onClick={onclick}>Login</button>")))
+    .body(format!("
+        <button 
+            onClick={onclick}
+            style='
+                height:150px;
+                width:150px;
+                font-size:20px;
+                display:block;
+                margin:auto;
+        '>Login</button>
+    ")))
 }
 
 fn login_url(state: String) -> anyhow::Result<Url> {

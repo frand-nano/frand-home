@@ -24,8 +24,10 @@ impl Display for User {
             "💎"
         } else if self.client_whitelist {
             "👤"
+        } else if self.id != Default::default() {
+            "🌐"
         } else {
-            "❓"
+            "❓"        
         };
         
         let name = &self.name;

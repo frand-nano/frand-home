@@ -1,8 +1,9 @@
+use actix_http::Uri;
 use anyhow::anyhow;
 use rustls::{pki_types, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 use serde::Deserialize;
-use std::{env::Args, fs::{read_to_string, File}, io::BufReader};
+use std::{env::Args, fs::{read_to_string, File}, io::BufReader, str::FromStr};
 use hex::decode;
 
 #[derive(Deserialize)]
@@ -22,7 +23,7 @@ pub struct Paths {
 
 #[derive(Deserialize)]
 pub struct Uris {
-    pub oauth_redirect: String,
+    oauth_redirect: String,
     pub oauth_root: String,
     pub oauth_token: String,   
     pub oauth_userinfo: String,    
@@ -84,5 +85,22 @@ impl Config {
     pub fn session_secret(&self) -> anyhow::Result<Vec<u8>> {
         let session_secret = self.keys.session_secret.as_str();        
         Ok(decode(session_secret)?)
+    }
+
+    pub fn oauth_redirect_with_port(&self) -> anyhow::Result<String> {
+        let oauth_redirect = &self.uris.oauth_redirect;
+        let port = self.settings.port;
+
+        let uri = Uri::from_str(oauth_redirect)?;
+        let scheme = uri.scheme_str().ok_or_else(|| 
+            anyhow!("❗ Has no scheme in Config.uris.oauth_redirect"),
+        )?;
+        let host = uri.host().ok_or_else(|| 
+            anyhow!("❗ Has no host in Config.uris.oauth_redirect"),
+        )?;
+        let path = uri.path();
+        let uri = format!("{scheme}://{host}:{port}{path}");
+
+        Ok(uri)
     }
 }

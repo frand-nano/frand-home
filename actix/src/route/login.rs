@@ -57,7 +57,7 @@ fn login_button_html(state: String) -> anyhow::Result<HttpResponse> {
 }
 
 fn login_url(state: String) -> anyhow::Result<Url> {
-    let oauth_redirect = CONFIG.uris.oauth_redirect.as_str();
+    let oauth_redirect = CONFIG.oauth_redirect_with_port()?;
     let oauth_root = CONFIG.uris.oauth_root.as_str();
     let oauth_scope_profile = CONFIG.uris.oauth_scope_profile.as_str();
     let oauth_scope_email = CONFIG.uris.oauth_scope_email.as_str();
@@ -66,7 +66,7 @@ fn login_url(state: String) -> anyhow::Result<Url> {
     let scope = format!("{oauth_scope_profile} {oauth_scope_email}");
 
     let mut options = HashMap::new();
-    options.insert("redirect_uri", oauth_redirect);
+    options.insert("redirect_uri", oauth_redirect.as_str());
     options.insert("client_id", client_id);
     options.insert("access_type", "offline");
     options.insert("response_type", "code");

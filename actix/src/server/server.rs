@@ -1,5 +1,11 @@
 use anyhow::bail;
-use frand_home_common::{state::{client::client_state::{ClientState, ClientStateMessage}, socket_state::SocketStateMessage}, State};
+use frand_home_common::{
+    state::{
+        client::client_state::{ClientState, ClientStateMessage, ClientStateProperty}, 
+        socket_state::SocketStateMessage,
+    },
+    StateProperty,
+};
 use std::collections::HashMap;
 use awc::Client;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
@@ -12,7 +18,7 @@ pub struct Server {
     receiver: UnboundedReceiver<ServerMessage>,
     users: HashMap<Uuid, User>,
     senders: HashMap<Uuid, UnboundedSender<SocketStateMessage>>,
-    client_states: HashMap<Uuid, ClientState>,
+    client_states: HashMap<Uuid, ClientStateProperty>,
 }
 
 #[derive(Debug, Clone)]
@@ -81,7 +87,7 @@ impl Server {
                         if let Some(sender) = message.sender { 
                             self.users.insert(id, user.clone());         
                             self.senders.insert(id, sender);      
-                            self.client_states.insert(id, ClientState::default());  
+                            self.client_states.insert(id, ClientStateProperty::default());  
                         }
                     }                    
                 }
@@ -182,5 +188,6 @@ async fn init_client_state(
     user: &User,
 ) -> anyhow::Result<ClientState> {
     let mut result = ClientState::default();
+    result.user = user.clone().into();
     Ok(result)
 }

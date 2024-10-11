@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use frand_home_common::state::user_state::UserState;
+use frand_home_common::state::client::user_state::UserState;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, Hash)]

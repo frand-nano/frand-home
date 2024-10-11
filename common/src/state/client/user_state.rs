@@ -1,51 +1,41 @@
 use serde::{Deserialize, Serialize};
 
-use super::user_state::UserState;
-
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq)]
-pub struct ClientState {
-    pub user: UserState,
-    pub number: i32,
+pub struct UserState {
+    pub name: String,
 }
 
 #[derive(Default, Clone, PartialEq, frand_home_base::yew::Properties)]
-pub struct ClientStateProperty {
-    pub state: frand_home_base::Node<ClientState>,
-    pub user: <UserState as frand_home_base::State>::Property,
-    pub number: frand_home_base::Node<i32>,
+pub struct UserStateProperty {
+    pub state: frand_home_base::Node<UserState>,
+    pub name: frand_home_base::Node<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub enum ClientStateMessage {
+pub enum UserStateMessage {
     Error(String),
-    State(ClientState),
-    User(<UserState as frand_home_base::State>::Message),
-    Number(i32),
+    State(UserState),
+    Name(String),
 }
 
-impl frand_home_base::NodeValue for ClientState {}
+impl frand_home_base::NodeValue for UserState {}
 
-impl frand_home_base::State for ClientState {
-    type Property = ClientStateProperty;
-    type Message = ClientStateMessage;
+impl frand_home_base::State for UserState {
+    type Property = UserStateProperty;
+    type Message = UserStateMessage;
 }
 
-impl frand_home_base::StateProperty for ClientStateProperty {
-    type Message = ClientStateMessage;
+impl frand_home_base::StateProperty for UserStateProperty {
+    type Message = UserStateMessage;
 
     fn apply(&mut self, message: Self::Message) {
         match message {
             Self::Message::Error(err) => log::error!("{err}"),
             Self::Message::State(value) => {
-                self.user.apply(
-                    <UserState as frand_home_base::State>::Message::State(
-                        value.user.clone()
-                    ), 
-                );
+                self.name.apply(value.name.clone());
                 self.state.apply(value);
             },
-            Self::Message::User(message) => self.user.apply(message),
-            Self::Message::Number(value) => self.number.apply(value),
+            Self::Message::Name(value) => self.name.apply(value),
         }
     }
 
@@ -53,8 +43,7 @@ impl frand_home_base::StateProperty for ClientStateProperty {
         match message {
             Self::Message::Error(err) => *err = format!("Export err from Node is no meaning. err: {err}"),
             Self::Message::State(value) => *value = self.state.value().clone(),
-            Self::Message::User(message) => self.user.export_to(message),
-            Self::Message::Number(value) => *value = self.number.value().clone(),
+            Self::Message::Name(value) => *value = self.name.value().clone(),
         }
     }
 
@@ -72,19 +61,15 @@ impl frand_home_base::StateProperty for ClientStateProperty {
                 frand_home_base::vec_pushed(&ids, 1), 
                 context,
             ),
-            user: <UserState as frand_home_base::State>::Property::new(
+            name: frand_home_base::Node::new(
                 frand_home_base::vec_pushed(&ids, 2), 
-                context,
-            ),
-            number: frand_home_base::Node::new(
-                frand_home_base::vec_pushed(&ids, 3), 
                 context,
             ),
         }
     }
 }
 
-impl frand_home_base::StateMessage for ClientStateMessage {
+impl frand_home_base::StateMessage for UserStateMessage {
     fn error(err: String) -> Self { Self::Error(err) }
     
     fn try_new(
@@ -94,10 +79,7 @@ impl frand_home_base::StateMessage for ClientStateMessage {
     ) -> Result<Self, Box<dyn std::any::Any>> {
         match ids[index] {
             1 => Ok(Self::State(*value.downcast()?)),
-            2 => Ok(Self::User(
-                <UserState as frand_home_base::State>::Message::new(ids, index+1, value)
-            )),
-            3 => Ok(Self::Number(*value.downcast()?)),
+            2 => Ok(Self::Name(*value.downcast()?)),
             _ => Err(value),
         }        
     }

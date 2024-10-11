@@ -1,29 +1,36 @@
 
 use frand_home_common::{
-    state::{app_state::{AppStateMessage, AppStateProperty}, socket_state::SocketStateMessage}, 
+    state::socket_state::{SocketStateMessage, SocketStateProperty}, 
     StateProperty,
 };
 use yew::{html, Component, Context, Html};
 
 use crate::{socket::client_socket::ClientSocket, view::task_bar::TaskBar};
 
+use super::app_property::{AppMessage, AppProperty};
+
 pub struct App {
     socket: ClientSocket,
-    prop: AppStateProperty,
+    prop: AppProperty,
 }
 
 impl App {
     fn new(context: &Context<Self>) -> Self {
         Self {
             socket: ClientSocket::new(context),
-            prop: <AppStateProperty as StateProperty>::new(vec![], Some(context)),
+            prop: AppProperty {
+                socket: <SocketStateProperty as StateProperty>::new::<App, SocketStateMessage>(
+                    vec![], 
+                    Some(context),
+                )
+            },
         }        
     }
 }
 
 impl Component for App {
-    type Message = AppStateMessage;
-    type Properties = AppStateProperty;
+    type Message = AppMessage;
+    type Properties = AppProperty;
 
     fn create(context: &Context<App>) -> Self {
         Self::new(context)
@@ -33,8 +40,8 @@ impl Component for App {
         html! {
             <div>
                 <TaskBar
-                    user = { self.prop.receive.client.user.clone() }
-                    number = { self.prop.receive.client.number.clone() }
+                    user = { self.prop.socket.client.user.clone() }
+                    number = { self.prop.socket.client.number.clone() }
                 />     
             </div>
         }
@@ -42,22 +49,16 @@ impl Component for App {
 
     fn update(&mut self, _context: &Context<App>, message: Self::Message) -> bool {   
         match message {       
-            Self::Message::Error(err) => {
-                log::error!("{err}");          
-            },
-            Self::Message::State(app_state) => {
-                self.prop.apply(Self::Message::State(app_state));              
-            },
             Self::Message::Send(socket_message) => self.socket.send(socket_message),
             Self::Message::Receive(socket_message) => {
                 match socket_message {
                     SocketStateMessage::State(socket_state) => {
-                        self.prop.receive.apply(
+                        self.prop.socket.apply(
                             SocketStateMessage::State(socket_state),
                         );          
                     },
                     SocketStateMessage::Client(client_state_message) => {
-                        self.prop.receive.client.apply(client_state_message);                 
+                        self.prop.socket.client.apply(client_state_message);                 
                     },
                     SocketStateMessage::Opened(_) => {},
                     SocketStateMessage::Closed(_) => {},

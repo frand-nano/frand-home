@@ -1,7 +1,7 @@
-use frand_home_common::state::{app_state::AppStateMessage, socket_state::SocketStateMessage};
+use frand_home_common::state::socket_state::SocketStateMessage;
 use yew::Context;
 use yew_websocket::websocket::{WebSocketService, WebSocketStatus, WebSocketTask};
-use crate::app::App;
+use crate::app::{app_property::AppMessage, App};
 
 pub struct ClientSocket {
     task: Option<WebSocketTask>,
@@ -10,14 +10,14 @@ pub struct ClientSocket {
 impl ClientSocket {
     pub fn new(context: &Context<App>) -> Self {
         let callback = context.link().callback(
-            |message| AppStateMessage::Receive(message)
+            |message| AppMessage::Receive(message)
         );
 
         let notification = context.link().batch_callback(
             |status| match status {
-                WebSocketStatus::Opened => Some(AppStateMessage::Receive(SocketStateMessage::Opened(()))),
-                WebSocketStatus::Closed => Some(AppStateMessage::Receive(SocketStateMessage::Closed(()))),
-                WebSocketStatus::Error => Some(AppStateMessage::Receive(SocketStateMessage::Error(format!("Error")))),
+                WebSocketStatus::Opened => Some(AppMessage::Receive(SocketStateMessage::Opened(()))),
+                WebSocketStatus::Closed => Some(AppMessage::Receive(SocketStateMessage::Closed(()))),
+                WebSocketStatus::Error => Some(AppMessage::Receive(SocketStateMessage::Error(format!("Error")))),
             }
         );
 

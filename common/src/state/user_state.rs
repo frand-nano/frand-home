@@ -1,35 +1,33 @@
 use frand_home_base::Node;
 use serde::{Deserialize, Serialize};
 
-use crate::state::user_state::UserState;
-
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq)]
-pub struct ClientState {
-    pub user: UserState,
+pub struct UserState {
+    pub name: String,
 }
 
 #[derive(Default, Clone, PartialEq, frand_home_base::yew::Properties)]
-pub struct ClientStateProperty {
-    pub state: Node<ClientState>,
-    pub user: Node<UserState>,
+pub struct UserStateProperty {
+    pub state: Node<UserState>,
+    pub name: Node<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub enum ClientStateMessage {
+pub enum UserStateMessage {
     Error(String),
-    State(ClientState),
-    User(<UserState as frand_home_base::State>::Message),
+    State(UserState),
+    Name(String),
 }
 
-impl frand_home_base::State for ClientState {
-    type Property = ClientStateProperty;
-    type Message = ClientStateMessage;
+impl frand_home_base::State for UserState {
+    type Property = UserStateProperty;
+    type Message = UserStateMessage;
 
     fn apply(&mut self, message: Self::Message) {
         match message {
             Self::Message::Error(err) => log::error!("{err}"),
             Self::Message::State(value) => *self = value,
-            Self::Message::User(value) => self.user.apply(value),
+            Self::Message::Name(value) => self.name = value,
         }
     }
 
@@ -37,12 +35,12 @@ impl frand_home_base::State for ClientState {
         match message {
             Self::Message::Error(err) => *err = format!("Export err from Node is no meaning. err: {err}"),
             Self::Message::State(value) => *value = self.clone(),
-            Self::Message::User(value) => self.user.export_to(value),
+            Self::Message::Name(value) => *value = self.name.clone(),
         }
     }
 }
 
-impl frand_home_base::StateProperty for ClientStateProperty {
+impl frand_home_base::StateProperty for UserStateProperty {
     fn new<Comp, State, Msg>(
         ids: Vec<usize>,
         state: &State,
@@ -57,6 +55,6 @@ impl frand_home_base::StateProperty for ClientStateProperty {
     }
 }
 
-impl frand_home_base::StateMessage for ClientStateMessage {
+impl frand_home_base::StateMessage for UserStateMessage {
     fn error(err: String) -> Self { Self::Error(err) }
 }

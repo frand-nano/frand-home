@@ -47,7 +47,7 @@ async fn spawn_message_loop(
     let mut session_clone = session.clone();
     spawn_local(async move {
         while let Some(message) = client_receiver.recv().await { 
-            let message: Result<String, _> = message.try_into();
+            let message = serde_json::to_string_pretty(&message);
             match message {
                 Ok(message) => {
                     if let Err(err) = session_clone.text(message).await {                        

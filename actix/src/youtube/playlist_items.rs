@@ -1,8 +1,5 @@
 use anyhow::anyhow;
 use awc::Client;
-use frand_home_common::state::client::view::music::musiclist_state::{
-    MusiclistItemState, MusiclistItemsState, 
-};
 use serde::{Deserialize, Serialize};
 
 use crate::CONFIG;
@@ -48,18 +45,6 @@ impl PlaylistItems {
     }
 }
 
-impl From<PlaylistItems> for MusiclistItemsState {
-    fn from(value: PlaylistItems) -> Self {
-        Self { 
-            next_page_token: value.next_page_token, 
-            prev_page_token: value.prev_page_token, 
-            total_results: value.page_info.total_results,
-            results_per_page: value.page_info.results_per_page,
-            items: value.items.into_iter().map(|item| item.into()).collect(), 
-        }
-    }
-}
-
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PlaylistItemsPageInfo {
@@ -71,15 +56,6 @@ pub struct PlaylistItemsPageInfo {
 #[serde(rename_all = "camelCase")]
 pub struct PlaylistItem {
     pub snippet: PlaylistItemSnippet,
-}
-
-impl From<PlaylistItem> for MusiclistItemState {
-    fn from(value: PlaylistItem) -> Self {
-        Self {
-            video_id: value.snippet.resource_id.video_id,
-            title: value.snippet.title,
-        }
-    }
 }
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]

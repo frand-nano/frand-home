@@ -67,9 +67,29 @@ pub fn property_state(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
     })
     .collect();
 
-    let impl_state_cases: Vec<TokenStream> = state_fields.iter()
-    .enumerate()
-    .map(|(_, (is_atomic, field))| {
+    let impl_state_property_applys: Vec<TokenStream> = state_fields.iter()
+    .map(|(is_atomic, field)| {
+        let field_name = &field.ident;
+        let field_ty = &field.ty;
+
+        if *is_atomic {   
+            quote! { 
+                self.#field_name.apply(value.#field_name.clone())
+            }   
+        } else {
+            quote! { 
+                self.#field_name.apply(
+                    <#field_ty as frand_home_base::State>::Message::State(
+                        value.#field_name.clone(),
+                    ), 
+                )
+            }        
+        }
+    })
+    .collect();
+
+    let impl_state_property_apply_cases: Vec<TokenStream> = state_fields.iter()
+    .map(|(is_atomic, field)| {        
         let field_name = field.ident.as_ref();
         let pascal_name = field_name
         .map(|field_name| {
@@ -79,16 +99,36 @@ pub fn property_state(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
         if *is_atomic {   
             quote! { 
-                Self::Message::#pascal_name(value) => self.#field_name = value
+                Self::Message::#pascal_name(value) => self.#field_name.apply(value)
             }   
         } else {
             quote! { 
-                Self::Message::#pascal_name(value) => self.#field_name.apply(value)
+                Self::Message::#pascal_name(message) => self.#field_name.apply(message)
             }        
         }
     })
     .collect();
 
+    let impl_state_property_export_cases: Vec<TokenStream> = state_fields.iter()
+    .map(|(is_atomic, field)| {        
+        let field_name = field.ident.as_ref();
+        let pascal_name = field_name
+        .map(|field_name| {
+            let pascal_name = field_name.to_string().to_case(Case::Pascal);
+            Ident::new(&pascal_name, field_name.span())
+        });
+
+        if *is_atomic {   
+            quote! { 
+                Self::Message::#pascal_name(value) => *value = self.#field_name.value().clone()
+            }   
+        } else {
+            quote! { 
+                Self::Message::#pascal_name(message) => self.#field_name.export_to(message)
+            }        
+        }
+    })
+    .collect();
 
     let impl_message_cases: Vec<TokenStream> = state_fields.iter()
     .enumerate()
@@ -107,8 +147,10 @@ pub fn property_state(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 #id => Ok(Self::#pascal_name(*value.downcast()?))
             }   
         } else {
-            quote! { 
-                #id => Ok(Self::#pascal_name(<#field_ty as frand_home_base::State>::Message::new(ids, index+1, value)))
+            quote! {                 
+                #id => Ok(Self::#pascal_name(
+                    <#field_ty as frand_home_base::State>::Message::new(ids, index+1, value)
+                ))
             }        
         }
     })
@@ -117,72 +159,93 @@ pub fn property_state(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let impl_property_fields: Vec<TokenStream> = state_fields.iter()
     .enumerate()
     .map(|(index, (is_atomic, field))| {
-        let id = index + 2;
-        let field_name = field.ident.as_ref();
+        let id = index + 2;        
+        let field_name = &field.ident;
         let field_ty = &field.ty;
-        
-        if *is_atomic {   
+
+        if *is_atomic {        
             quote! { 
                 #field_name: frand_home_base::Node::new(
                     frand_home_base::vec_pushed(&ids, #id), 
                     context,
                 )
-            }   
-        } else {
+            }
+        } else {        
             quote! { 
                 #field_name: <#field_ty as frand_home_base::State>::Property::new(
                     frand_home_base::vec_pushed(&ids, #id), 
                     context,
                 )
-            }        
-        }
-    })
-    .collect();
-
-    let apply_property_fields: Vec<TokenStream> = state_fields.iter()
-    .map(|(is_atomic, field)| {
-        let field_name = field.ident.as_ref();
-        
-        if *is_atomic {   
-            quote! { 
-                #field_name: self.#field_name.applied(state.#field_name.clone())
-            }  
-        } else {
-            quote! { 
-                #field_name: self.#field_name.applied(&state.#field_name)
-            }      
-        }
+            }
+        }        
     })
     .collect();
 
     quote! {
-        #[derive(Serialize, Deserialize, Debug, Clone)]
+        #[derive(Default, Clone, PartialEq, frand_home_base::yew::Properties)]
+        pub struct #state_property_name {
+            pub state: frand_home_base::Node<#state_name>,
+            #(#property_fields,)*
+        }
+
+        #[derive(Serialize, Deserialize, Clone)]
         pub enum #state_message_name {
             Error(String),
             State(#state_name),
             #(#message_variants,)*
         }
 
-        #[derive(frand_home_base::Properties, PartialEq, Clone, Default)]
-        pub struct #state_property_name {
-            pub callback: frand_home_base::Callback<#state_name>,
-            #(#property_fields,)*
-        }
+        impl frand_home_base::NodeValue for #state_name {}
 
         impl frand_home_base::State for #state_name {
-            type Message = #state_message_name;
             type Property = #state_property_name;
+            type Message = #state_message_name;
+        }
+
+        impl frand_home_base::StateProperty for #state_property_name {
+            type Message = #state_message_name;
         
             fn apply(&mut self, message: Self::Message) {
                 match message {
                     Self::Message::Error(err) => log::error!("{err}"),
-                    Self::Message::State(value) => *self = value,
-                    #(#impl_state_cases,)*
+                    Self::Message::State(value) => {
+                        #(#impl_state_property_applys;)*
+                        self.state.apply(value);
+                    },
+                    #(#impl_state_property_apply_cases,)*
+                }
+            }
+
+            fn export_to(&self, message: &mut Self::Message) {
+                match message {
+                    Self::Message::Error(err) => *err = format!("Export err from Node is no meaning. err: {err}"),
+                    Self::Message::State(value) => *value = self.state.value().clone(),
+                    #(#impl_state_property_export_cases,)*
+                }
+            }
+            
+            fn new<Comp, Msg>(
+                #[allow(unused_variables)] ids: Vec<usize>,
+                context: Option<&frand_home_base::yew::Context<Comp>>,
+            ) -> Self 
+            where
+                Comp: frand_home_base::yew::BaseComponent, 
+                Msg: frand_home_base::StateMessage,
+                <Comp as frand_home_base::yew::BaseComponent>::Message: From<Msg>,
+            {
+                Self { 
+                    state: frand_home_base::Node::new(
+                        frand_home_base::vec_pushed(&ids, 1), 
+                        context,
+                    ),
+                    #(#impl_property_fields,)*
                 }
             }
         }
 
         impl frand_home_base::StateMessage for #state_message_name {
+            fn error(err: String) -> Self { Self::Error(err) }
+
             fn try_new(
                 ids: &[usize], 
                 index: usize, 
@@ -193,52 +256,6 @@ pub fn property_state(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #(#impl_message_cases,)*
                     _ => Err(value),
                 }        
-            }
-
-            fn error(err: String) -> Self {
-                Self::Error(err)
-            }
-        }
-
-        impl frand_home_base::StateProperty for #state_property_name {
-            fn new<Comp, Msg>(
-                #[allow(unused_variables)] ids: Vec<usize>,
-                context: Option<&frand_home_base::Context<Comp>>,
-            ) -> Self 
-            where
-                Comp: frand_home_base::BaseComponent, 
-                Msg: frand_home_base::StateMessage,
-                <Comp as frand_home_base::BaseComponent>::Message: From<Msg>,
-            {
-                let callback_ids = ids.clone();
-                let callback = match context {
-                    Some(context) => context.link().callback(move |state: #state_name| 
-                        Msg::new(callback_ids.as_slice(), 0, Box::new(state))
-                    ),
-                    None => Default::default(),
-                };
-
-                Self { 
-                    callback,
-                    #(#impl_property_fields,)*
-                }
-            }
-        }
-
-        impl #state_property_name {        
-            pub fn applied(&self, state: &#state_name) -> Self {
-                Self {
-                    callback: self.callback.clone(),        
-                    #(#apply_property_fields,)*
-                }
-            }
-
-            pub fn callback(&self) -> &frand_home_base::Callback<#state_name> {
-                &self.callback
-            }
-
-            pub fn emit(&self, state: #state_name) {
-                self.callback.emit(state)
             }
         }
     }.into()

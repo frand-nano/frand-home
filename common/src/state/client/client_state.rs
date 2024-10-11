@@ -1,104 +1,10 @@
+use frand_home_macro::PropertyState;
 use serde::{Deserialize, Serialize};
 
 use super::user_state::UserState;
 
-#[derive(Serialize, Deserialize, Default, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq, PropertyState)]
 pub struct ClientState {
     pub user: UserState,
     pub number: i32,
-}
-
-#[derive(Default, Clone, PartialEq, frand_home_base::yew::Properties)]
-pub struct ClientStateProperty {
-    pub state: frand_home_base::Node<ClientState>,
-    pub user: <UserState as frand_home_base::State>::Property,
-    pub number: frand_home_base::Node<i32>,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub enum ClientStateMessage {
-    Error(String),
-    State(ClientState),
-    User(<UserState as frand_home_base::State>::Message),
-    Number(i32),
-}
-
-impl frand_home_base::NodeValue for ClientState {}
-
-impl frand_home_base::State for ClientState {
-    type Property = ClientStateProperty;
-    type Message = ClientStateMessage;
-}
-
-impl frand_home_base::StateProperty for ClientStateProperty {
-    type Message = ClientStateMessage;
-
-    fn apply(&mut self, message: Self::Message) {
-        match message {
-            Self::Message::Error(err) => log::error!("{err}"),
-            Self::Message::State(value) => {
-                self.user.apply(
-                    <UserState as frand_home_base::State>::Message::State(
-                        value.user.clone()
-                    ), 
-                );
-                self.state.apply(value);
-            },
-            Self::Message::User(message) => self.user.apply(message),
-            Self::Message::Number(value) => self.number.apply(value),
-        }
-    }
-
-    fn export_to(&self, message: &mut Self::Message) {
-        match message {
-            Self::Message::Error(err) => *err = format!("Export err from Node is no meaning. err: {err}"),
-            Self::Message::State(value) => *value = self.state.value().clone(),
-            Self::Message::User(message) => self.user.export_to(message),
-            Self::Message::Number(value) => *value = self.number.value().clone(),
-        }
-    }
-
-    fn new<Comp, Msg>(
-        ids: Vec<usize>,
-        context: Option<&frand_home_base::yew::Context<Comp>>,
-    ) -> Self    
-    where
-        Comp: frand_home_base::yew::BaseComponent,
-        Msg: frand_home_base::StateMessage,
-        <Comp as frand_home_base::yew::BaseComponent>::Message: From<Msg>,
-    {
-        Self { 
-            state: frand_home_base::Node::new(
-                frand_home_base::vec_pushed(&ids, 1), 
-                context,
-            ),
-            user: <UserState as frand_home_base::State>::Property::new(
-                frand_home_base::vec_pushed(&ids, 2), 
-                context,
-            ),
-            number: frand_home_base::Node::new(
-                frand_home_base::vec_pushed(&ids, 3), 
-                context,
-            ),
-        }
-    }
-}
-
-impl frand_home_base::StateMessage for ClientStateMessage {
-    fn error(err: String) -> Self { Self::Error(err) }
-    
-    fn try_new(
-        ids: &[usize], 
-        index: usize, 
-        #[allow(unused_variables)] value: Box<dyn std::any::Any>,
-    ) -> Result<Self, Box<dyn std::any::Any>> {
-        match ids[index] {
-            1 => Ok(Self::State(*value.downcast()?)),
-            2 => Ok(Self::User(
-                <UserState as frand_home_base::State>::Message::new(ids, index+1, value)
-            )),
-            3 => Ok(Self::Number(*value.downcast()?)),
-            _ => Err(value),
-        }        
-    }
 }

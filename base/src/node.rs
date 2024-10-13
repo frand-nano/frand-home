@@ -1,8 +1,8 @@
 use yew::{BaseComponent, Callback, Context, Properties};
 
-use crate::StateMessage;
+use crate::state::StateMessage;
 
-pub trait NodeValue: 'static + Default + PartialEq {}
+pub trait NodeValue: 'static + Default + Clone + PartialEq {}
 
 #[derive(Default, Clone, Properties)]
 pub struct Node<V: NodeValue> {
@@ -23,6 +23,7 @@ impl<V: NodeValue> PartialEq for Node<V> {
 
 impl<V: NodeValue> Node<V> {
     pub fn value(&self) -> &V { &self.node.value }
+    pub fn callback(&self) -> &Callback<V> { &self.node.callback }
 
     pub fn apply(&mut self, value: V) {
         self.node.value = value;

@@ -42,6 +42,8 @@ impl Component for App {
                 <TaskBar
                     user = { self.prop.socket.client.user.clone() }
                     number = { self.prop.socket.client.number.clone() }
+                    numbers = { self.prop.socket.client.numbers.clone() }
+                    dec = { self.prop.socket.client.dec.clone() }
                 />     
             </div>
         }
@@ -53,12 +55,12 @@ impl Component for App {
             Self::Message::Receive(socket_message) => {
                 match socket_message {
                     SocketStateMessage::State(socket_state) => {
-                        self.prop.socket.apply(
+                        self.prop.socket.apply_message(
                             SocketStateMessage::State(socket_state),
                         );          
                     },
                     SocketStateMessage::Client(client_state_message) => {
-                        self.prop.socket.client.apply(client_state_message);                 
+                        self.prop.socket.client.apply_message(client_state_message);                 
                     },
                     SocketStateMessage::Opened(_) => {},
                     SocketStateMessage::Closed(_) => {},

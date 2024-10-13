@@ -129,7 +129,7 @@ impl Server {
             serde_json::to_string_pretty(&message).unwrap_or_default(),
         );    
         match self.client_states.get_mut(&id) {
-            Some(client_state) => client_state.apply(message.clone()),
+            Some(client_state) => client_state.apply_message(message.clone()),
             None => log::error!("❗ client_states has no key: {id}"),
         }
         self.send(&id, SocketStateMessage::Client(message.clone()))?;

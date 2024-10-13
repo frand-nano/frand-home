@@ -77,7 +77,7 @@ pub fn property_state(
             }   
         } else {
             quote! { 
-                self.#field_name.apply(
+                self.#field_name.apply_message(
                     <#field_ty as frand_home_base::State>::Message::State(
                         value.#field_name.clone(),
                     ), 
@@ -102,7 +102,7 @@ pub fn property_state(
             }   
         } else {
             quote! { 
-                Self::Message::#pascal_name(message) => self.#field_name.apply(message)
+                Self::Message::#pascal_name(message) => self.#field_name.apply_message(message)
             }        
         }
     })
@@ -123,7 +123,7 @@ pub fn property_state(
             }   
         } else {
             quote! { 
-                Self::Message::#pascal_name(message) => self.#field_name.export_to(message)
+                Self::Message::#pascal_name(message) => self.#field_name.export_message(message)
             }        
         }
     })
@@ -204,7 +204,7 @@ pub fn property_state(
         impl frand_home_base::StateProperty for #state_property_name {
             type Message = #state_message_name;
         
-            fn apply(&mut self, message: Self::Message) {
+            fn apply_message(&mut self, message: Self::Message) {
                 match message {
                     Self::Message::Error(err) => log::error!("{err}"),
                     Self::Message::State(value) => {
@@ -215,7 +215,7 @@ pub fn property_state(
                 }
             }
 
-            fn export_to(&self, message: &mut Self::Message) {
+            fn export_message(&self, message: &mut Self::Message) {
                 match message {
                     Self::Message::Error(err) => *err = format!("Export err from Node is no meaning. err: {err}"),
                     Self::Message::State(value) => *value = self.state.value().clone(),

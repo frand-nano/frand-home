@@ -5,8 +5,8 @@ use super::StateMessage;
 pub trait StateProperty {
     type Message;
 
-    fn apply(&mut self, message: Self::Message);
-    fn export_to(&self, message: &mut Self::Message);
+    fn apply_message(&mut self, message: Self::Message);
+    fn export_message(&self, message: &mut Self::Message);
 
     fn new<Comp, Msg>(
         ids: Vec<usize>,

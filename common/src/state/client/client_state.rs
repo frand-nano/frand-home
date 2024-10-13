@@ -7,4 +7,6 @@ use super::user_state::UserState;
 pub struct ClientState {
     pub user: UserState,
     pub number: i32,
+    pub numbers: Vec<i32>,
+    pub dec: Option<i32>,
 }

@@ -1,7 +1,7 @@
 use frand_home_base::PropertyState;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq, PropertyState)]
 pub struct UserState {
     pub name: String,
 }

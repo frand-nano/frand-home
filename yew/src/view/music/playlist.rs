@@ -1,15 +1,16 @@
-use frand_home_common::{state::client::view::music::playlist_state::PlaylistState, Node, State};
+use frand_home_common::{state::client::music::playlist_state::PlaylistItemsState, Node, State};
 use yew::{function_component, html, Html, Properties};
 
 #[derive(Properties, PartialEq)]
 pub struct PlaylistProperty {
-    pub state: <PlaylistState as State>::Property,
+    pub visible: Node<bool>,
+    pub list_items: <PlaylistItemsState as State>::Property,
     pub musiclist_playlist_id: Node<String>,
 }
 
 #[function_component]
 pub fn Playlist(prop: &PlaylistProperty) -> Html {
-    let items: Vec<_> = prop.state.list_items.items.items().clone().into_iter()
+    let items: Vec<_> = prop.list_items.items.items().clone().into_iter()
     .map(|item| {
         let musiclist_playlist_id = prop.musiclist_playlist_id.clone();
         let title = item.title.clone();
@@ -24,7 +25,7 @@ pub fn Playlist(prop: &PlaylistProperty) -> Html {
         }
     }).collect(); 
 
-    match prop.state.visible.value() {
+    match prop.visible.value() {
         true => {
             html! {
                 <div style="display:flex; flex-direction: column;">

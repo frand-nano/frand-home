@@ -34,6 +34,11 @@ async fn main() -> anyhow::Result<()> {
     let (server, message_sender) = Server::new();
     let server_handle = spawn(server.run());
 
+    let ip = match CONFIG.settings.local_mode {
+        true => "127.0.0.1",
+        false => "0.0.0.0",
+    };
+
     let http_server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(Client::default()))
@@ -54,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
             .service(route::get_ws)
             .default_service(web::route().to(|_:HttpRequest| HttpResponse::NotFound()))
     })
-    .bind_rustls_0_22(("0.0.0.0", CONFIG.settings.port), tls_server_config)?
+    .bind_rustls_0_22((ip, CONFIG.settings.port), tls_server_config)?
     .run();
 
     let server_handle = async move { 

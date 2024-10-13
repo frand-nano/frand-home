@@ -1,8 +1,6 @@
 use anyhow::anyhow;
 use awc::Client;
-use frand_home_common::state::client::view::music::musiclist_state::{
-    MusiclistItemState, MusiclistItemsState, 
-};
+use frand_home_common::state::client::music::musiclist_state::{MusiclistItemState, MusiclistItemsState};
 use serde::{Deserialize, Serialize};
 
 use crate::CONFIG;
@@ -25,6 +23,7 @@ impl PlaylistItems {
             ("part", "snippet"),
             ("playlistId", playlist_id),
             ("key", &CONFIG.keys.youtube_api_key),
+            ("maxResults", &CONFIG.settings.youtube_playlist_items_max_results.to_string()),
         ];
         let mut response = client
         .get(&CONFIG.uris.youtube_playlist_items)

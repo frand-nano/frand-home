@@ -1,18 +1,12 @@
 use anyhow::bail;
-use std::collections::HashMap;
-use awc::Client;
 use frand_home_common::{
     state::{
-        client::{
-            client_music_state::ClientMusicStateMessage, 
-            client_state::{ClientState, ClientStateMessage}, 
-            view::music::{musiclist_state::{MusiclistItemsStateMessage, MusiclistStateMessage}, playlist_state::PlaylistState},
-        }, 
-        server::server_state::{ServerState, ServerStateMessage}, 
-        socket_state::SocketStateMessage, 
+        client::{client_state::{ClientState, ClientStateMessage, ClientStateProperty}, music::{client_music_state::ClientMusicStateMessage, musiclist_state::{MusiclistItemsStateMessage, MusiclistStateMessage}, playlist_state::PlaylistState}}, server::server_state::{ServerStateMessage, ServerStateProperty}, socket_state::SocketStateMessage
     },
-    State,
+    StateProperty,
 };
+use std::collections::HashMap;
+use awc::Client;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use uuid::Uuid;
 
@@ -23,8 +17,8 @@ pub struct Server {
     receiver: UnboundedReceiver<ServerMessage>,
     users: HashMap<Uuid, User>,
     senders: HashMap<Uuid, UnboundedSender<SocketStateMessage>>,
-    server_state: ServerState,
-    client_states: HashMap<Uuid, ClientState>,
+    server_state: ServerStateProperty,
+    client_states: HashMap<Uuid, ClientStateProperty>,
 }
 
 #[derive(Debug, Clone)]
@@ -49,7 +43,7 @@ impl Server {
             receiver,      
             users: HashMap::new(),     
             senders: HashMap::new(),    
-            server_state: ServerState::default(), 
+            server_state: Default::default(), 
             client_states: HashMap::new(),     
         };
         (server, sender)
@@ -100,11 +94,6 @@ impl Server {
             SocketStateMessage::Client(client_state_message) => {
                 self.handle_client_message(&id, client_state_message).await?;  
             },
-            SocketStateMessage::Request(_) => {
-                if let Some(user) = self.users.get(&id) {
-                    log::info!("{user} 🔗 Request"); 
-                }              
-            },
             SocketStateMessage::Opened(_) => {
                 if let Some(user) = message.user {
                     log::info!("{user} 🔗 Opened {id}");   
@@ -112,7 +101,7 @@ impl Server {
                         if let Some(sender) = message.sender { 
                             self.users.insert(id, user.clone());         
                             self.senders.insert(id, sender);      
-                            self.client_states.insert(id, ClientState::default());  
+                            self.client_states.insert(id, ClientStateProperty::default());  
                         }
                     }                    
                 }
@@ -135,7 +124,7 @@ impl Server {
         }
         Ok(())
     }
-
+    
     async fn handle_server_message(
         &mut self,
         id: &Uuid,    
@@ -153,7 +142,7 @@ impl Server {
         log::info!("{user} 🔗 Server {}",
             serde_json::to_string_pretty(&message).unwrap_or_default(),
         );    
-        self.server_state.apply(message.clone());
+        self.server_state.apply_message(message.clone());
         self.broadcast(SocketStateMessage::Server(message))?;     
         
         Ok(()) 
@@ -177,7 +166,7 @@ impl Server {
             serde_json::to_string_pretty(&message).unwrap_or_default(),
         );    
         match self.client_states.get_mut(&id) {
-            Some(client_state) => client_state.apply(message.clone()),
+            Some(client_state) => client_state.apply_message(message.clone()),
             None => log::error!("❗ client_states has no key: {id}"),
         }
         self.send(&id, SocketStateMessage::Client(message.clone()))?;
@@ -205,7 +194,7 @@ impl Server {
                     serde_json::to_string_pretty(&message).unwrap_or_default(),
                 );                            
                 match self.client_states.get_mut(&id) {
-                    Some(client_state) => client_state.apply(message.clone()),
+                    Some(client_state) => client_state.apply_message(message.clone()),
                     None => log::error!("❗ client_states has no key: {id}"),
                 }
                 self.send(&id, SocketStateMessage::Client(message))?;
@@ -263,10 +252,10 @@ async fn init_client_state(
     user: &User,
 ) -> anyhow::Result<ClientState> {
     let mut result = ClientState::default();
+    result.user = user.clone().into();
     result.music.playlist = PlaylistState {
         visible: true,
         list_items: Playlist::youtube_get(client, &CONFIG.settings.playlists).await?.into(), 
     };
-    result.user = user.clone().into();
     Ok(result)
 }

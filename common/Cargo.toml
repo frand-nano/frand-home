@@ -10,7 +10,6 @@ workspace = true
 
 [dependencies]
 frand-home-base = { path = "../base" }
-frand-home-macro = { path = "../macro" }
 serde = "1"
 serde_json = "1"
 anyhow = "1.0"

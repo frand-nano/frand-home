@@ -1,14 +1,14 @@
-use frand_home_common::{state::client::view::music::youtube_player_state::YoutubePlayerState, State};
+use frand_home_common::Node;
 use yew::{function_component, html, Html, Properties};
 
 #[derive(Properties, PartialEq)]
 pub struct YoutubePlayerProperty {
-    pub state: <YoutubePlayerState as State>::Property,
+    pub video_id: Node<String>,
 }
 
 #[function_component]
 pub fn YoutubePlayer(prop: &YoutubePlayerProperty) -> Html {
-    let video_id = prop.state.video_id.value();
+    let video_id = prop.video_id.value();
 
     html! {
         <div>

@@ -1,129 +1,85 @@
-use std::any::Any;
-
 use serde::{Deserialize, Serialize};
-use yew::{BaseComponent, Callback, Context, Properties};
+use yew::{Callback, Properties};
 
-use crate::{vec_pushed, State, StateMessage};
+use crate::{node::{Node, NodeValue}, state::{State, StateMessage, StateProperty}, vec_pushed};
 
-impl<V: Default + Clone + PartialEq> State for Option<V> {
-    type Message = OptionStateMessage<V>;
-    type Property = OptionStateProperty<V>;
-
-    fn apply(&mut self, message: Self::Message) {
-        match message {
-            Self::Message::Error(err) => log::error!("{err}"),
-            Self::Message::State(value) => *self = value,
-        }
-    }
+#[derive(Default, Clone, PartialEq, Properties)]
+pub struct OptionNode<V: NodeValue> {
+    value: Node<Option<V>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum OptionStateMessage<V: Clone> {
+#[derive(Serialize, Deserialize, Clone)]
+pub enum OptionMessage<V: NodeValue> {
     Error(String),
     State(Option<V>),
 }
 
-impl<V: Clone + 'static> StateMessage for OptionStateMessage<V> {
+impl<V: NodeValue> OptionNode<V> {
+    pub fn value(&self) -> &Option<V> { self.value.value() }
+    pub fn callback(&self) -> &Callback<Option<V>> { self.value.callback() }
+
+    fn apply(&mut self, value: Option<V>) {
+        self.value.apply(value);
+    }
+
+    pub fn emit(&self, value: Option<V>) {
+        self.value.emit(value);
+    }
+}
+
+impl<V: NodeValue> NodeValue for Option<V> {}
+
+impl<V: NodeValue> State for Option<V> {
+    type Property = OptionNode<V>;
+    type Message = OptionMessage<V>;
+}
+
+impl<V: NodeValue> StateProperty for OptionNode<V> {
+    type Message = OptionMessage<V>;
+
+    fn apply_message(&mut self, message: Self::Message) {
+        match message {
+            Self::Message::Error(err) => log::error!("{err}"),
+            Self::Message::State(value) => self.apply(value),
+        }
+    }
+
+    fn export_message(&self, message: &mut Self::Message) {
+        match message {
+            Self::Message::Error(err) => *err = format!("Export err from Node is no meaning. err: {err}"),
+            Self::Message::State(value) => *value = self.value().clone(),
+        }
+    }
+
+    fn new<Comp, Msg>(
+        ids: Vec<usize>,
+        context: Option<&yew::Context<Comp>>,
+    ) -> Self    
+    where
+        Comp: yew::BaseComponent,
+        Msg: StateMessage,
+        <Comp as yew::BaseComponent>::Message: From<Msg>,
+    {
+        Self { 
+            value: Node::new(
+                vec_pushed(&ids, 1), 
+                context,
+            ),
+        }
+    }
+}
+
+impl<V: NodeValue> StateMessage for OptionMessage<V> {
+    fn error(err: String) -> Self { Self::Error(err) }
+    
     fn try_new(
-        ids: &[usize],
+        ids: &[usize], 
         index: usize, 
-        #[allow(unused_variables)] value: Box<dyn Any>,
-    ) -> Result<Self, Box<dyn Any>> {
+        #[allow(unused_variables)] value: Box<dyn std::any::Any>,
+    ) -> Result<Self, Box<dyn std::any::Any>> {
         match ids[index] {
             1 => Ok(Self::State(*value.downcast()?)),
             _ => Err(value),
         }        
-    }
-    
-    fn error(err: String) -> Self {
-        Self::Error(err)
-    }
-}
-
-#[derive(Clone, Properties, PartialEq, Default)]
-pub struct OptionStateProperty<V: Clone + PartialEq> {
-    pub callback: OptionStatePropertyCallback<V>,
-}
-
-impl<V: Default + Clone + PartialEq + 'static> OptionStateProperty<V> {
-    pub fn value(&self) -> Option<&V> { self.callback.value.as_ref() }
-
-    pub fn new<Comp, Msg>(
-        ids: Vec<usize>,
-        context: Option<&Context<Comp>>,
-    ) -> Self     
-    where
-        Comp: BaseComponent,
-        Msg: StateMessage,
-        <Comp as BaseComponent>::Message: From<Msg>,
-    {
-        Self { 
-            callback: OptionStatePropertyCallback::new(ids, context), 
-        }
-    }
-
-    pub fn applied(&self, value: &Option<V>) -> Self {
-        Self {
-            callback: self.callback.applied(value),        
-        }
-    }
-
-    pub fn callback(&self) -> &Callback<Option<V>> {
-        self.callback.callback()
-    }
-
-    pub fn emit(&self, value: Option<V>) {
-        self.callback.emit(value)
-    }
-}
-
-#[derive(Clone, PartialEq, Default)]
-pub struct OptionStatePropertyCallback<V: Clone> {
-    ids: Vec<usize>,
-    callback: Callback<Option<V>>,
-    value: Option<V>,
-}
-
-impl<V> OptionStatePropertyCallback<V> 
-where V: Clone + Default + 'static
-{
-    pub fn new<Comp, Msg>(
-        ids: Vec<usize>,
-        context: Option<&Context<Comp>>,
-    ) -> Self 
-    where
-        Comp: BaseComponent,
-        Msg: StateMessage,
-        <Comp as BaseComponent>::Message: From<Msg>,
-    {
-        let callback_ids = vec_pushed(&ids, 1);
-        let callback = match context {
-            Some(context) => context.link().callback(move |items: Option<V>| 
-                Msg::new(callback_ids.as_slice(), 0, Box::new(items))
-            ),
-            None => Default::default(),
-        };
-
-        Self { 
-            ids, 
-            callback, 
-            value: None,
-        }
-    }
-
-    pub fn applied(&self, value: &Option<V>) -> Self {        
-        Self { 
-            ids: self.ids.clone(), 
-            callback: self.callback.clone(), 
-            value: value.clone(),
-        }
-    }
-
-    pub fn callback(&self) -> &Callback<Option<V>> {
-        &self.callback
-    }
-
-    pub fn emit(&self, value: Option<V>) {
-        self.callback.emit(value)
     }
 }

@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use awc::Client;
-use frand_home_common::state::client::view::music::playlist_state::{PlaylistItemState, PlaylistItemsState};
+use frand_home_common::state::client::music::playlist_state::{PlaylistItemState, PlaylistItemsState};
 use serde::{Deserialize, Serialize};
 
 use crate::CONFIG;
@@ -21,6 +21,7 @@ impl Playlist {
             ("part", "snippet"),
             ("id", &playlist_ids),
             ("key", &CONFIG.keys.youtube_api_key),
+            ("maxResults", &CONFIG.settings.youtube_playlists_max_results.to_string()),
         ];
         let mut response = client
         .get(&CONFIG.uris.youtube_playlists)
@@ -51,7 +52,6 @@ impl From<Playlist> for PlaylistItemsState {
         }
     }
 }
-
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]

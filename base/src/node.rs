@@ -1,50 +1,38 @@
 use yew::{BaseComponent, Callback, Context, Properties};
 
-use crate::StateMessage;
+use crate::state::StateMessage;
 
-#[derive(Clone, Properties, PartialEq, Default)]
-pub struct Node<V: PartialEq> {
-    pub callback: NodeCallback<V>,
+pub trait NodeValue: 'static + Default + Clone + PartialEq {}
+
+#[derive(Default, Clone, Properties)]
+pub struct Node<V: NodeValue> {
+    node: NodeInner<V>,
 }
 
-impl<V: Default + Clone + PartialEq + 'static> Node<V> {
-    pub fn value(&self) -> &V { &self.callback.value }
+#[derive(Default, Clone)]
+pub struct NodeInner<V: NodeValue> {
+    value: V,
+    callback: Callback<V>,
+}
 
-    pub fn new<Comp, Msg>(
-        ids: Vec<usize>,
-        context: Option<&Context<Comp>>,
-    ) -> Self     
-    where
-        Comp: BaseComponent,
-        Msg: StateMessage,
-        <Comp as BaseComponent>::Message: From<Msg>,
-    {
-        Self { 
-            callback: NodeCallback::new(ids, context), 
-        }
+impl<V: NodeValue> PartialEq for Node<V> {
+    fn eq(&self, other: &Self) -> bool {
+        self.node.value == other.node.value 
     }
+}
 
-    pub fn applied(&self, value: V) -> Self {
-        Self {
-            callback: self.callback.applied(value),        
-        }
+impl<V: NodeValue> Node<V> {
+    pub fn value(&self) -> &V { &self.node.value }
+    pub fn callback(&self) -> &Callback<V> { &self.node.callback }
+
+    pub fn apply(&mut self, value: V) {
+        self.node.value = value;
     }
 
     pub fn emit(&self, value: V) {
-        self.callback.emit(value)
+        self.node.callback.emit(value)
     }
-}
 
-#[derive(Clone, PartialEq, Default)]
-pub struct NodeCallback<V> {
-    ids: Vec<usize>,
-    callback: Callback<V>,
-    value: V,
-}
-
-impl<V> NodeCallback<V> 
-where V: Default + 'static
-{
     pub fn new<Comp, Msg>(
         ids: Vec<usize>,
         context: Option<&Context<Comp>>,
@@ -63,25 +51,25 @@ where V: Default + 'static
         };
 
         Self { 
-            ids, 
-            callback, 
-            value: V::default(),
+            node: NodeInner { 
+                value: V::default(), 
+                callback, 
+            }, 
         }
     }
+}
 
-    pub fn applied(&self, value: V) -> Self {        
-        Self { 
-            ids: self.ids.clone(), 
-            callback: self.callback.clone(), 
-            value,
-        }
-    }
+macro_rules! node_value {
+    ( $head: ty $(,$tys: ty)* $(,)? ) => { 
+        impl NodeValue for $head {}         
+        $(impl NodeValue for $tys {})*      
+    };
+}
 
-    pub fn callback(&self) -> &Callback<V> {
-        &self.callback
-    }
-
-    pub fn emit(&self, value: V) {
-        self.callback.emit(value)
-    }
+node_value!{ 
+    i8, i16, i32, i64, i128, isize,
+    u8, u16, u32, u64, u128, usize,
+    f32, f64,
+    char, bool, (),
+    String,
 }

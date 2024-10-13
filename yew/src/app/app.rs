@@ -3,9 +3,9 @@ use frand_home_common::{
     state::socket_state::{SocketStateMessage, SocketStateProperty}, 
     StateProperty,
 };
-use yew::{html, Component, Context, Html};
+use yew::{Component, Context, Html};
 
-use crate::{socket::client_socket::ClientSocket, view::task_bar::TaskBar};
+use crate::socket::client_socket::ClientSocket;
 
 use super::app_property::{AppMessage, AppProperty};
 
@@ -37,13 +37,7 @@ impl Component for App {
     }
 
     fn view(&self, _context: &Context<App>) -> Html {     
-        html! {
-            <div>
-                <TaskBar
-                    user = { self.prop.socket.client.user.clone() }
-                />     
-            </div>
-        }
+        crate::view::view(&self.prop)
     }
 
     fn update(&mut self, _context: &Context<App>, message: Self::Message) -> bool {   
@@ -55,6 +49,9 @@ impl Component for App {
                         self.prop.socket.apply_message(
                             SocketStateMessage::State(socket_state),
                         );          
+                    },
+                    SocketStateMessage::Server(server_state_message) => {
+                        self.prop.socket.server.apply_message(server_state_message);
                     },
                     SocketStateMessage::Client(client_state_message) => {
                         self.prop.socket.client.apply_message(client_state_message);                 

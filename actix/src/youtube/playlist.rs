@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use awc::Client;
+use frand_home_common::state::client::music::playlist_state::{PlaylistItemState, PlaylistItemsState};
 use serde::{Deserialize, Serialize};
 
 use crate::CONFIG;
@@ -43,12 +44,28 @@ impl Playlist {
     }
 }
 
+impl From<Playlist> for PlaylistItemsState {
+    fn from(value: Playlist) -> Self {
+        Self { 
+            items: value.items.into_iter().map(|item| item.into()).collect(), 
+        }
+    }
+}
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PlaylistItem {
     pub id: String,
     pub snippet: PlaylistItemSnippet,
+}
+
+impl From<PlaylistItem> for PlaylistItemState {
+    fn from(value: PlaylistItem) -> Self {
+        Self {
+            playlist_id: value.id,
+            title: value.snippet.title,
+        }
+    }
 }
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]

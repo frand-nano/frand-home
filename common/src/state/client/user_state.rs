@@ -1,4 +1,4 @@
-use frand_home_macro::PropertyState;
+use frand_home_base::PropertyState;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq, PropertyState)]

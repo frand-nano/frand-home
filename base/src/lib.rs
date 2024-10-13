@@ -12,6 +12,8 @@ pub use self::{
     vec::*,
 };
 
+pub use frand_home_macro::*;
+
 pub fn vec_pushed<V: Clone>(vec: &Vec<V>, value: V) -> Vec<V> {
     let mut result = vec.clone();
     result.push(value);

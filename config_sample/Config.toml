@@ -20,6 +20,7 @@ session_secret = "" #64 bytes random key
 youtube_api_key = "" #youtube data api v3 key
 
 [settings]
+local_mode = false
 port = 4430
 server_whitelists = [
     #id in [uris]oauth_userinfo

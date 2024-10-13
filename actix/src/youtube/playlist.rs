@@ -21,6 +21,7 @@ impl Playlist {
             ("part", "snippet"),
             ("id", &playlist_ids),
             ("key", &CONFIG.keys.youtube_api_key),
+            ("maxResults", &CONFIG.settings.youtube_playlists_max_results.to_string()),
         ];
         let mut response = client
         .get(&CONFIG.uris.youtube_playlists)

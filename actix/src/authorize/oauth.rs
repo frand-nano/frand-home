@@ -69,7 +69,7 @@ async fn request_token(
     authorization_code: &str,
     client: &Client,
 ) -> Result<OAuthResponse, Box<dyn std::error::Error>> {
-    let oauth_redirect = CONFIG.uris.oauth_redirect.as_str();
+    let oauth_redirect = CONFIG.oauth_redirect_with_port()?;
     let oauth_token = CONFIG.uris.oauth_token.as_str();
 
     let client_id = CONFIG.keys.client_id.as_str();
@@ -78,7 +78,7 @@ async fn request_token(
     let params = [
         ("grant_type", "authorization_code"),
         ("code", authorization_code),
-        ("redirect_uri", oauth_redirect),
+        ("redirect_uri", oauth_redirect.as_str()),
         ("client_id", client_id),
         ("client_secret", client_secret),
     ];

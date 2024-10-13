@@ -41,9 +41,6 @@ impl Component for App {
             <div>
                 <TaskBar
                     user = { self.prop.socket.client.user.clone() }
-                    number = { self.prop.socket.client.number.clone() }
-                    numbers = { self.prop.socket.client.numbers.clone() }
-                    dec = { self.prop.socket.client.dec.clone() }
                 />     
             </div>
         }

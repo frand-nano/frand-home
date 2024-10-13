@@ -10,11 +10,13 @@ pub trait SessionUtil {
     fn picture(&self) -> String { self.get_string("picture") }  
 
     fn server_whitelist(&self) -> bool {
-        CONFIG.settings.server_whitelists.contains(&self.user_id())
+        CONFIG.settings.local_mode
+        || CONFIG.settings.server_whitelists.contains(&self.user_id())
     }
 
     fn client_whitelist(&self) -> bool {
-        (CONFIG.settings.client_whitelists_all && self.user_id() != "user_id")
+        CONFIG.settings.local_mode
+        || (CONFIG.settings.client_whitelists_all && self.user_id() != "user_id")
         || CONFIG.settings.client_whitelists.contains(&self.user_id())
     }
 

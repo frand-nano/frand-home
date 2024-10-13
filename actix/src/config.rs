@@ -42,6 +42,7 @@ pub struct Keys {
 
 #[derive(Deserialize)]
 pub struct Settings {
+    pub local_mode: bool,
     pub port: u16,
     pub server_whitelists: Vec<String>,
     pub client_whitelists_all: bool,

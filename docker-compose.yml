@@ -1,5 +1,6 @@
 services:
   frandhome:
+    restart: always
     image: frandhome
     build: 
       context: .

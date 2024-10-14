@@ -21,7 +21,7 @@ impl App {
             prop: AppProperty {
                 socket: <SocketStateProperty as StateProperty>::new::<App, SocketStateMessage>(
                     vec![], 
-                    Some(context),
+                    context,
                 )
             },
         }        

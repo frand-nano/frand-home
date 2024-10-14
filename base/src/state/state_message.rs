@@ -18,6 +18,7 @@ pub trait StateMessage {
                     index:{index}, 
                     err:{:#?}, 
                 ", ids, err);
+                
                 log::error!("{err}");
                 Self::error(err)
             },

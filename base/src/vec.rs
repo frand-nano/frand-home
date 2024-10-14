@@ -3,22 +3,22 @@ use yew::{Callback, Properties};
 
 use crate::{node::NodeValue, state::{State, StateMessage, StateProperty}, vec_pushed};
 
-#[derive(Default, Clone, PartialEq, Properties)]
+#[derive(Debug, Clone, PartialEq, Properties)]
 pub struct VecNode<V: NodeValue> {
     node: VecNodeInner<V>,
 }
 
-#[derive(Default, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct VecNodeInner<V: NodeValue> {
     items: Vec<V>,
     ids: Vec<usize>,
-    callback: Callback<Vec<V>>,
-    callback_item: Callback<(usize, V)>,
-    callback_push: Callback<V>,
-    callback_pop: Callback<()>,
+    callback: Option<Callback<Vec<V>>>,
+    callback_item: Option<Callback<(usize, V)>>,
+    callback_push: Option<Callback<V>>,
+    callback_pop: Option<Callback<()>>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum VecMessage<V: NodeValue> {
     Error(String),
     State(Vec<V>),
@@ -30,25 +30,58 @@ pub enum VecMessage<V: NodeValue> {
 impl<V: NodeValue> VecNode<V> {
     pub fn items(&self) -> &Vec<V> { &self.node.items }
     pub fn item(&self, index: usize) -> Option<&V> { self.node.items.get(index) }
-    pub fn callback(&self) -> &Callback<Vec<V>> { &self.node.callback }
-    pub fn callback_item(&self) -> &Callback<(usize, V)> { &self.node.callback_item }
-    pub fn callback_push(&self) -> &Callback<V> { &self.node.callback_push }
-    pub fn callback_pop(&self) -> &Callback<()> { &self.node.callback_pop }
+    
+    pub fn callback(&self) -> &Callback<Vec<V>> { 
+        match &self.node.callback {
+            Some(callback) => callback,
+            None => {todo!()},
+        }
+    }
+    pub fn callback_item(&self) -> &Callback<(usize, V)> { 
+        match &self.node.callback_item {
+            Some(callback) => callback,
+            None => {todo!()},
+        }
+    }
+    pub fn callback_push(&self) -> &Callback<V> { 
+        match &self.node.callback_push {
+            Some(callback) => callback,
+            None => {todo!()},
+        }
+    }
+    pub fn callback_pop(&self) -> &Callback<()> { 
+        match &self.node.callback_pop {
+            Some(callback) => callback,
+            None => {todo!()},
+        }
+    }
 
     pub fn emit(&self, items: Vec<V>) {
-        self.node.callback.emit(items);
+        match &self.node.callback {
+            Some(callback) => callback.emit(items),
+            None => {},
+        }
     }
 
     pub fn emit_item(&self, index: usize, value: V) { 
-        self.node.callback_item.emit((index, value));
+        match &self.node.callback_item {
+            Some(callback) => callback.emit((index, value)),
+            None => {},
+        }
     }
 
     pub fn emit_push(&self, value: V) { 
-        self.node.callback_push.emit(value);
+        match &self.node.callback_push {
+            Some(callback) => callback.emit(value),
+            None => {},
+        }
     }
 
     pub fn emit_pop(&self) { 
-        self.node.callback_pop.emit(());
+        match &self.node.callback_pop {
+            Some(callback) => callback.emit(()),
+            None => {},
+        }
     }
 }
 
@@ -59,6 +92,18 @@ impl<V: NodeValue> VecNodeInner<V> {
 
     fn apply_item(&mut self, index: usize, item: V) {
         self.items[index] = item;
+    }
+
+    pub fn apply_export<Msg: StateMessage>(&mut self, value: Vec<V>) -> Msg {
+        self.items = value.clone();
+        let ids = vec_pushed(&self.ids, 1);
+        Msg::new(ids.as_slice(), 0, Box::new(value))
+    }
+
+    pub fn apply_item_export<Msg: StateMessage>(&mut self, index: usize, item: V) -> Msg {
+        self.items[index] = item.clone();
+        let ids = vec_pushed(&self.ids, 2);
+        Msg::new(ids.as_slice(), 0, Box::new(item))
     }
 
     fn push(&mut self, value: V) {
@@ -82,7 +127,7 @@ impl<V: NodeValue> StateProperty for VecNode<V> {
 
     fn apply_message(&mut self, message: Self::Message) {
         match message {
-            Self::Message::Error(err) => log::error!("{err}"),
+            Self::Message::Error(err) => log::error!("❗ {err}"),
             Self::Message::State(items) => {
                 self.node.apply(items);
             },
@@ -112,7 +157,7 @@ impl<V: NodeValue> StateProperty for VecNode<V> {
 
     fn new<Comp, Msg>(
         ids: Vec<usize>,
-        context: Option<&yew::Context<Comp>>,
+        context: &yew::Context<Comp>,
     ) -> Self    
     where
         Comp: yew::BaseComponent,
@@ -120,46 +165,49 @@ impl<V: NodeValue> StateProperty for VecNode<V> {
         <Comp as yew::BaseComponent>::Message: From<Msg>,
     {
         let callback_ids = vec_pushed(&ids, 1);
-        let callback = match context {
-            Some(context) => context.link().callback(move |items: Vec<V>| 
-                Msg::new(callback_ids.as_slice(), 0, Box::new(items))
-            ),
-            None => Default::default(),
-        };
+        let callback = context.link().callback(move |items: Vec<V>| 
+            Msg::new(callback_ids.as_slice(), 0, Box::new(items))
+        );
 
         let callback_item_ids = vec_pushed(&ids, 2);
-        let callback_item = match context {
-            Some(context) => context.link().callback(move |(index, value): (usize, V)| 
-                Msg::new(vec_pushed(&callback_item_ids, index).as_slice(), 0, Box::new(value))
-            ),
-            None => Default::default(),
-        };
+        let callback_item = context.link().callback(move |(index, value): (usize, V)| 
+            Msg::new(vec_pushed(&callback_item_ids, index).as_slice(), 0, Box::new(value))
+        );
 
 
         let callback_push_ids = vec_pushed(&ids, 3);
-        let callback_push = match context {
-            Some(context) => context.link().callback(move |value: V| 
-                Msg::new(callback_push_ids.as_slice(), 0, Box::new(value))
-            ),
-            None => Default::default(),
-        };
+        let callback_push = context.link().callback(move |value: V| 
+            Msg::new(callback_push_ids.as_slice(), 0, Box::new(value))
+        );
 
         let callback_pop_ids = vec_pushed(&ids, 4);
-        let callback_pop = match context {
-            Some(context) => context.link().callback(move |value: ()| 
-                Msg::new(callback_pop_ids.as_slice(), 0, Box::new(value))
-            ),
-            None => Default::default(),
-        };
+        let callback_pop = context.link().callback(move |value: ()| 
+            Msg::new(callback_pop_ids.as_slice(), 0, Box::new(value))
+        );
 
         Self { 
             node: VecNodeInner {
                 items: Vec::default(),
                 ids,
-                callback,
-                callback_item,
-                callback_push,
-                callback_pop,
+                callback: Some(callback),
+                callback_item: Some(callback_item),
+                callback_push: Some(callback_push),
+                callback_pop: Some(callback_pop),
+            },
+        }
+    }
+    
+    fn new_default(
+        ids: Vec<usize>,
+    ) -> Self {        
+        Self { 
+            node: VecNodeInner {
+                items: Vec::default(),
+                ids,
+                callback: None,
+                callback_item: None,
+                callback_push: None,
+                callback_pop: None,
             },
         }
     }

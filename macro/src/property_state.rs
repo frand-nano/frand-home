@@ -129,6 +129,54 @@ pub fn property_state(
     })
     .collect();
 
+    let impl_new_property_fields: Vec<TokenStream> = state_fields.iter()
+    .enumerate()
+    .map(|(index, (is_atomic, field))| {
+        let id = index + 2;        
+        let field_name = &field.ident;
+        let field_ty = &field.ty;
+
+        if *is_atomic {        
+            quote! { 
+                #field_name: frand_home_base::Node::new(
+                    frand_home_base::vec_pushed(&ids, #id), 
+                    context,
+                )
+            }
+        } else {        
+            quote! { 
+                #field_name: <#field_ty as frand_home_base::State>::Property::new(
+                    frand_home_base::vec_pushed(&ids, #id), 
+                    context,
+                )
+            }
+        }        
+    })
+    .collect();
+
+    let impl_new_default_property_fields: Vec<TokenStream> = state_fields.iter()
+    .enumerate()
+    .map(|(index, (is_atomic, field))| {
+        let id = index + 2;        
+        let field_name = &field.ident;
+        let field_ty = &field.ty;
+
+        if *is_atomic {        
+            quote! { 
+                #field_name: frand_home_base::Node::new_default(
+                    frand_home_base::vec_pushed(&ids, #id), 
+                )
+            }
+        } else {        
+            quote! { 
+                #field_name: <#field_ty as frand_home_base::State>::Property::new_default(
+                    frand_home_base::vec_pushed(&ids, #id), 
+                )
+            }
+        }        
+    })
+    .collect();
+
     let impl_message_cases: Vec<TokenStream> = state_fields.iter()
     .enumerate()
     .map(|(index, (is_atomic, field))| {
@@ -155,39 +203,14 @@ pub fn property_state(
     })
     .collect();
 
-    let impl_property_fields: Vec<TokenStream> = state_fields.iter()
-    .enumerate()
-    .map(|(index, (is_atomic, field))| {
-        let id = index + 2;        
-        let field_name = &field.ident;
-        let field_ty = &field.ty;
-
-        if *is_atomic {        
-            quote! { 
-                #field_name: frand_home_base::Node::new(
-                    frand_home_base::vec_pushed(&ids, #id), 
-                    context,
-                )
-            }
-        } else {        
-            quote! { 
-                #field_name: <#field_ty as frand_home_base::State>::Property::new(
-                    frand_home_base::vec_pushed(&ids, #id), 
-                    context,
-                )
-            }
-        }        
-    })
-    .collect();
-
     quote! {
-        #[derive(Default, Clone, PartialEq, frand_home_base::yew::Properties)]
+        #[derive(Debug, Clone, PartialEq, frand_home_base::yew::Properties)]
         pub struct #state_property_name {
             pub state: frand_home_base::Node<#state_name>,
             #(#property_fields,)*
         }
 
-        #[derive(Serialize, Deserialize, Clone)]
+        #[derive(Debug, Serialize, Deserialize, Clone)]
         pub enum #state_message_name {
             Error(String),
             State(#state_name),
@@ -206,7 +229,9 @@ pub fn property_state(
         
             fn apply_message(&mut self, message: Self::Message) {
                 match message {
-                    Self::Message::Error(err) => log::error!("{err}"),
+                    Self::Message::Error(err) => {
+                        log::error!("❗ {}.apply_message: {err}", stringify!(#state_property_name));
+                    },
                     Self::Message::State(value) => {
                         #(#impl_state_property_applys;)*
                         self.state.apply(value);
@@ -217,7 +242,7 @@ pub fn property_state(
 
             fn export_message(&self, message: &mut Self::Message) {
                 match message {
-                    Self::Message::Error(err) => *err = format!("Export err from Node is no meaning. err: {err}"),
+                    Self::Message::Error(err) => *err = format!("❗ Export err from Node is no meaning. err: {err}"),
                     Self::Message::State(value) => *value = self.state.value().clone(),
                     #(#impl_state_property_export_cases,)*
                 }
@@ -225,7 +250,7 @@ pub fn property_state(
             
             fn new<Comp, Msg>(
                 #[allow(unused_variables)] ids: Vec<usize>,
-                context: Option<&frand_home_base::yew::Context<Comp>>,
+                context: &frand_home_base::yew::Context<Comp>,
             ) -> Self 
             where
                 Comp: frand_home_base::yew::BaseComponent, 
@@ -237,7 +262,18 @@ pub fn property_state(
                         frand_home_base::vec_pushed(&ids, 1), 
                         context,
                     ),
-                    #(#impl_property_fields,)*
+                    #(#impl_new_property_fields,)*
+                }
+            }
+
+            fn new_default(
+                #[allow(unused_variables)] ids: Vec<usize>,
+            ) -> Self {
+                Self { 
+                    state: frand_home_base::Node::new_default(
+                        frand_home_base::vec_pushed(&ids, 1), 
+                    ),
+                    #(#impl_new_default_property_fields,)*
                 }
             }
         }
@@ -253,7 +289,14 @@ pub fn property_state(
                 match ids[index] {
                     1 => Ok(Self::State(*value.downcast()?)),
                     #(#impl_message_cases,)*
-                    _ => Err(value),
+                    _ => {
+                        log::error!("❗ {}::try_new() index: {} ids[index]: {}", 
+                            stringify!(#state_message_name), 
+                            index,
+                            ids[index],
+                        );
+                        Err(value)
+                    },
                 }        
             }
         }

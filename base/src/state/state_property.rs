@@ -10,11 +10,15 @@ pub trait StateProperty {
 
     fn new<Comp, Msg>(
         ids: Vec<usize>,
-        context: Option<&Context<Comp>>,
+        context: &Context<Comp>,
     ) -> Self    
     where
         Comp: BaseComponent,
         Msg: StateMessage,
         <Comp as BaseComponent>::Message: From<Msg>,
     ;
+
+    fn new_default(
+        ids: Vec<usize>,
+    ) -> Self;
 }

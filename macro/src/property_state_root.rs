@@ -2,15 +2,25 @@ use proc_macro2::TokenStream;
 use syn::Ident;
 use quote::quote;
 
-pub fn json_convert(
+pub fn property_state_root(
     state_name: &Ident, 
 ) -> TokenStream {
+    let state_property_name = {
+        let state_message_name = format!("{state_name}Property");
+        Ident::new(&state_message_name, state_name.span())
+    };
     let state_message_name = {
         let state_message_name = format!("{state_name}Message");
         Ident::new(&state_message_name, state_name.span())
     };
 
     quote! {
+        impl Default for #state_property_name {
+            fn default() -> Self {
+                <Self as frand_home_base::StateProperty>::new_default(vec![])
+            }
+        }
+
         impl TryFrom<#state_message_name> for String {
             type Error = anyhow::Error;
 

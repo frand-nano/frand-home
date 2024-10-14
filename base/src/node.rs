@@ -1,18 +1,21 @@
+use std::fmt::Debug;
+
 use yew::{BaseComponent, Callback, Context, Properties};
 
 use crate::state::StateMessage;
 
-pub trait NodeValue: 'static + Default + Clone + PartialEq {}
+pub trait NodeValue: 'static + Debug + Default + Clone + PartialEq {}
 
-#[derive(Default, Clone, Properties)]
+#[derive(Debug, Clone, Properties)]
 pub struct Node<V: NodeValue> {
     node: NodeInner<V>,
 }
 
-#[derive(Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NodeInner<V: NodeValue> {
+    ids: Vec<usize>,
     value: V,
-    callback: Callback<V>,
+    callback: Option<Callback<V>>,
 }
 
 impl<V: NodeValue> PartialEq for Node<V> {
@@ -23,19 +26,33 @@ impl<V: NodeValue> PartialEq for Node<V> {
 
 impl<V: NodeValue> Node<V> {
     pub fn value(&self) -> &V { &self.node.value }
-    pub fn callback(&self) -> &Callback<V> { &self.node.callback }
-
-    pub fn apply(&mut self, value: V) {
-        self.node.value = value;
+    pub fn callback(&self) -> &Callback<V> { 
+        match &self.node.callback {
+            Some(callback) => callback,
+            None => {todo!()},
+        }
     }
 
-    pub fn emit(&self, value: V) {
-        self.node.callback.emit(value)
+    pub fn apply(&mut self, value: V) {
+        self.node.value = value.clone();
+    }
+
+    pub fn apply_export<Msg: StateMessage>(&mut self, value: V) -> Msg {
+        self.node.value = value.clone();
+        log::info!("{:#?}", self);
+        Msg::new(self.node.ids.as_slice(), 0, Box::new(value))
+    }
+
+    pub fn emit(&self, value: V) {        
+        match &self.node.callback {
+            Some(callback) => callback.emit(value),
+            None => {},
+        }
     }
 
     pub fn new<Comp, Msg>(
         ids: Vec<usize>,
-        context: Option<&Context<Comp>>,
+        context: &Context<Comp>,
     ) -> Self 
     where
         Comp: BaseComponent,
@@ -43,17 +60,27 @@ impl<V: NodeValue> Node<V> {
         <Comp as BaseComponent>::Message: From<Msg>,
     {
         let callback_ids = ids.clone();
-        let callback = match context {
-            Some(context) => context.link().callback(move |value: V| 
-                Msg::new(callback_ids.as_slice(), 0, Box::new(value))
-            ),
-            None => Default::default(),
-        };
+        let callback = context.link().callback(move |value: V| 
+            Msg::new(callback_ids.as_slice(), 0, Box::new(value))
+        );
 
         Self { 
-            node: NodeInner { 
+            node: NodeInner {
+                ids: ids.clone(), 
                 value: V::default(), 
-                callback, 
+                callback: Some(callback), 
+            }, 
+        }
+    }
+
+    pub fn new_default(
+        ids: Vec<usize>,
+    ) -> Self {
+        Self { 
+            node: NodeInner {
+                ids: ids.clone(), 
+                value: V::default(), 
+                callback: None, 
             }, 
         }
     }

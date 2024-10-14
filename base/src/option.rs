@@ -3,12 +3,12 @@ use yew::{Callback, Properties};
 
 use crate::{node::{Node, NodeValue}, state::{State, StateMessage, StateProperty}, vec_pushed};
 
-#[derive(Default, Clone, PartialEq, Properties)]
+#[derive(Debug, Clone, PartialEq, Properties)]
 pub struct OptionNode<V: NodeValue> {
     value: Node<Option<V>>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum OptionMessage<V: NodeValue> {
     Error(String),
     State(Option<V>),
@@ -22,6 +22,10 @@ impl<V: NodeValue> OptionNode<V> {
         self.value.apply(value);
     }
 
+    pub fn apply_export<Msg: StateMessage>(&mut self, value: Option<V>) -> Msg {
+        self.value.apply_export(value)
+    }
+    
     pub fn emit(&self, value: Option<V>) {
         self.value.emit(value);
     }
@@ -39,7 +43,7 @@ impl<V: NodeValue> StateProperty for OptionNode<V> {
 
     fn apply_message(&mut self, message: Self::Message) {
         match message {
-            Self::Message::Error(err) => log::error!("{err}"),
+            Self::Message::Error(err) => log::error!("❗ {err}"),
             Self::Message::State(value) => self.apply(value),
         }
     }
@@ -53,7 +57,7 @@ impl<V: NodeValue> StateProperty for OptionNode<V> {
 
     fn new<Comp, Msg>(
         ids: Vec<usize>,
-        context: Option<&yew::Context<Comp>>,
+        context: &yew::Context<Comp>,
     ) -> Self    
     where
         Comp: yew::BaseComponent,
@@ -64,6 +68,16 @@ impl<V: NodeValue> StateProperty for OptionNode<V> {
             value: Node::new(
                 vec_pushed(&ids, 1), 
                 context,
+            ),
+        }
+    }
+    
+    fn new_default(
+        ids: Vec<usize>,
+    ) -> Self {        
+        Self { 
+            value: Node::new_default(
+                vec_pushed(&ids, 1), 
             ),
         }
     }

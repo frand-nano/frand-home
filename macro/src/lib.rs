@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 use lazy_static::lazy_static;
 use proc_macro::TokenStream;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use syn::{parse_macro_input, ItemStruct, Type};
 
 mod property_state;
-mod json_convert;
+mod property_state_root;
 
 #[proc_macro]
 pub fn property_state(item: TokenStream) -> TokenStream {
@@ -21,10 +21,16 @@ pub fn property_state_derive(item: TokenStream) -> TokenStream {
     property_state::property_state(&state.ident, &state.fields).into()
 }
 
-#[proc_macro_derive(JsonConvert)]
-pub fn json_convert_derive(item: TokenStream) -> TokenStream {
+#[proc_macro_derive(PropertyStateRoot)]
+pub fn property_state_root(item: TokenStream) -> TokenStream {
     let state = parse_macro_input!(item as ItemStruct);
-    json_convert::json_convert(&state.ident).into()
+    let property_state = property_state::property_state(&state.ident, &state.fields);
+    let property_state_root = property_state_root::property_state_root(&state.ident);
+    
+    quote! { 
+        #property_state
+        #property_state_root
+    }.into()
 }
 
 lazy_static! {    

@@ -21,10 +21,6 @@ impl<V: NodeValue> OptionNode<V> {
     fn apply(&mut self, value: Option<V>) {
         self.value.apply(value);
     }
-
-    pub fn apply_export<Msg: StateMessage>(&mut self, value: Option<V>) -> Msg {
-        self.value.apply_export(value)
-    }
     
     pub fn emit(&self, value: Option<V>) {
         self.value.emit(value);
@@ -39,7 +35,20 @@ impl<V: NodeValue> State for Option<V> {
 }
 
 impl<V: NodeValue> StateProperty for OptionNode<V> {
+    type State = Option<V>;
     type Message = OptionMessage<V>;
+
+    fn clone_state(&self) -> Self::State {
+        self.value.value().clone()
+    }
+
+    fn apply_state(&mut self, state: Self::State) {
+        self.apply(state.clone());
+    }
+
+    fn apply_export<Msg: StateMessage>(&mut self, state: Self::State) -> Msg {
+        self.value.apply_export(state)
+    }
 
     fn apply_message(&mut self, message: Self::Message) {
         match message {

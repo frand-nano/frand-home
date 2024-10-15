@@ -83,35 +83,27 @@ impl<V: NodeValue> VecNode<V> {
             None => {},
         }
     }
-}
 
-impl<V: NodeValue> VecNodeInner<V> {
     fn apply(&mut self, value: Vec<V>) {
-        self.items = value;
+        self.node.items = value;
     }
 
     fn apply_item(&mut self, index: usize, item: V) {
-        self.items[index] = item;
-    }
-
-    pub fn apply_export<Msg: StateMessage>(&mut self, value: Vec<V>) -> Msg {
-        self.items = value.clone();
-        let ids = vec_pushed(&self.ids, 1);
-        Msg::new(ids.as_slice(), 0, Box::new(value))
-    }
-
-    pub fn apply_item_export<Msg: StateMessage>(&mut self, index: usize, item: V) -> Msg {
-        self.items[index] = item.clone();
-        let ids = vec_pushed(&self.ids, 2);
-        Msg::new(ids.as_slice(), 0, Box::new(item))
+        self.node.items[index] = item;
     }
 
     fn push(&mut self, value: V) {
-        self.items.push(value)
+        self.node.items.push(value)
     }
 
     fn pop(&mut self) -> Option<V> {
-        self.items.pop()
+        self.node.items.pop()
+    }
+
+    pub fn apply_item_export<Msg: StateMessage>(&mut self, index: usize, item: V) -> Msg {
+        self.node.items[index] = item.clone();
+        let ids = vec_pushed(&self.node.ids, 2);
+        Msg::new(ids.as_slice(), 0, Box::new(item))
     }
 }
 
@@ -123,22 +115,37 @@ impl<V: NodeValue> State for Vec<V> {
 }
 
 impl<V: NodeValue> StateProperty for VecNode<V> {
+    type State = Vec<V>;
     type Message = VecMessage<V>;
+
+    fn clone_state(&self) -> Self::State {
+        self.node.items.clone()
+    }
+
+    fn apply_state(&mut self, state: Self::State) {
+        self.apply(state.clone());
+    }
+
+    fn apply_export<Msg: StateMessage>(&mut self, value: Vec<V>) -> Msg {
+        self.node.items = value.clone();
+        let ids = vec_pushed(&self.node.ids, 1);
+        Msg::new(ids.as_slice(), 0, Box::new(value))
+    }
 
     fn apply_message(&mut self, message: Self::Message) {
         match message {
             Self::Message::Error(err) => log::error!("❗ {err}"),
             Self::Message::State(items) => {
-                self.node.apply(items);
+                self.apply(items);
             },
             Self::Message::Item((index, item)) => {
-                self.node.apply_item(index, item);
+                self.apply_item(index, item);
             },
             Self::Message::Push(item) => {
-                self.node.push(item);
+                self.push(item);
             },
             Self::Message::Pop(()) => {
-                self.node.pop();
+                self.pop();
             },
         }
     }

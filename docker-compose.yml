@@ -1,7 +1,7 @@
 services:
-  frandhome:
+  frand-home:
     restart: always
-    image: frandhome
+    image: frand-home
     build: 
       context: .
       dockerfile: ./Dockerfile

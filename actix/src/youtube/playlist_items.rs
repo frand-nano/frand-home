@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use awc::Client;
-use frand_home_common::state::client::music::musiclist_state::{MusiclistItemState, MusiclistItemsState};
+use frand_home_common::state::client::music::{musiclist_state::{MusiclistItemState, MusiclistItemsState}, playlist_state::PlaylistPageState};
 use serde::{Deserialize, Serialize};
 
 use crate::CONFIG;
@@ -17,11 +17,12 @@ pub struct PlaylistItems {
 impl PlaylistItems {
     pub async fn youtube_get(
         client: &Client,
-        playlist_id: &str,
+        playlist_page: &PlaylistPageState,
     ) -> anyhow::Result<Self> {
         let params = [
             ("part", "snippet"),
-            ("playlistId", playlist_id),
+            ("playlistId", &playlist_page.playlist_id),
+            ("pageToken", &playlist_page.page_token.clone().unwrap_or_default()),
             ("key", &CONFIG.keys.youtube_api_key),
             ("maxResults", &CONFIG.settings.youtube_playlist_items_max_results.to_string()),
         ];
@@ -36,10 +37,10 @@ impl PlaylistItems {
             .map_err(|err| err.into())
         } else {
             log::error!("❗ PlaylistItems::youtube_get 
-                playlist_id: {}, 
+                playlist_page: {:#?}, 
                 response.json(): {:#?},
                 ",
-                playlist_id,
+                playlist_page,
                 response.json::<serde_json::Value>().await?,
             );
             Err(anyhow!("response.status(): {}", response.status()))

@@ -1,15 +1,42 @@
-use frand_home_common::{state::client::music::musiclist_state::MusiclistItemsState, Node, State};
+use frand_home_common::{state::client::music::musiclist_state::MusiclistState, Node, State};
 use yew::{function_component, html, Html, Properties};
 
 #[derive(Properties, PartialEq)]
 pub struct MusiclistProperty {
-    pub list_items: <MusiclistItemsState as State>::Property,
+    pub musiclist: <MusiclistState as State>::Property,
     pub youtube_player_video_id: Node<String>,
 }
 
 #[function_component]
-pub fn Musiclist(prop: &MusiclistProperty) -> Html {
-    let items: Vec<_> = prop.list_items.items.items().clone().into_iter()
+pub fn Musiclist(prop: &MusiclistProperty) -> Html {    
+    let pages = {
+        let page_token = prop.musiclist.playlist_page.page_token.clone();
+        let prev_page_token = prop.musiclist.list_items.prev_page_token.value().clone();
+        let prev_page_disabled = prev_page_token.is_none();
+        let onclick_prev_page = move |_| {
+            page_token.emit(prev_page_token.clone());
+        };
+
+        let page_token = prop.musiclist.playlist_page.page_token.clone();
+        let next_page_token = prop.musiclist.list_items.next_page_token.value().clone();
+        let next_page_disabled = next_page_token.is_none();
+        let onclick_next_page = move |_| {
+            page_token.emit(next_page_token.clone());
+        };
+
+        html! {
+            <div>
+                <button disabled={prev_page_disabled} onclick={onclick_prev_page}>
+                {"prev"}
+                </button>
+                <button disabled={next_page_disabled} onclick={onclick_next_page}>
+                {"next"}
+                </button>
+            </div>
+        }
+    };
+
+    let items: Vec<_> = prop.musiclist.list_items.items.items().clone().into_iter()
     .map(|item| {
         let youtube_player_video_id = prop.youtube_player_video_id.clone();
         let title = item.title.clone();
@@ -27,6 +54,7 @@ pub fn Musiclist(prop: &MusiclistProperty) -> Html {
     html! {
         <div style="display:flex; flex-direction: column;">
             <p>{"Musiclist"}</p>
+            {pages}
             {items}
         </div>
     }

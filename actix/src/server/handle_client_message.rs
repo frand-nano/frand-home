@@ -1,5 +1,5 @@
 use anyhow::bail;
-use frand_home_common::{state::{client::{client_state::ClientStateMessage, music::{client_music_state::ClientMusicStateMessage, musiclist_state::MusiclistStateMessage}}, socket_state::SocketStateMessage}, StateProperty};
+use frand_home_common::{state::{client::{client_state::ClientStateMessage, music::{client_music_state::ClientMusicStateMessage, musiclist_state::MusiclistStateMessage, playlist_state::PlaylistPageState}}, socket_state::SocketStateMessage}, StateProperty};
 use uuid::Uuid;
 
 use crate::{server::send, youtube::playlist_items::PlaylistItems};
@@ -42,12 +42,15 @@ impl Server {
             match message {
                 ClientStateMessage::Music(
                     ClientMusicStateMessage::Musiclist(
-                        MusiclistStateMessage::PlaylistId(playlist_id)
+                        MusiclistStateMessage::PlaylistPage(_)
                     )
                 ) => {
                     let playlist_items = PlaylistItems::youtube_get(
                         &self.client, 
-                        &playlist_id,
+                        &PlaylistPageState {
+                            playlist_id: client_state.music.musiclist.playlist_page.playlist_id.value().clone(),
+                            page_token: client_state.music.musiclist.playlist_page.page_token.value().clone(),
+                        },
                     ).await?;
 
                     let message = client_state.music.musiclist.list_items.state.apply_export(

@@ -66,6 +66,22 @@ pub fn property_state(
     })
     .collect();
 
+    let impl_state_property_clone_states: Vec<TokenStream> = state_fields.iter()
+    .map(|(is_atomic, field)| {
+        let field_name = &field.ident;
+
+        if *is_atomic {   
+            quote! { 
+                #field_name: self.#field_name.value().clone()
+            }   
+        } else {
+            quote! { 
+                #field_name: self.#field_name.clone_state()
+            }        
+        }
+    })
+    .collect();
+
     let impl_state_property_applys: Vec<TokenStream> = state_fields.iter()
     .map(|(is_atomic, field)| {
         let field_name = &field.ident;
@@ -73,13 +89,13 @@ pub fn property_state(
 
         if *is_atomic {   
             quote! { 
-                self.#field_name.apply(value.#field_name.clone())
+                self.#field_name.apply(state.#field_name.clone())
             }   
         } else {
             quote! { 
                 self.#field_name.apply_message(
                     <#field_ty as frand_home_base::State>::Message::State(
-                        value.#field_name.clone(),
+                        state.#field_name.clone(),
                     ), 
                 )
             }        
@@ -206,7 +222,7 @@ pub fn property_state(
     quote! {
         #[derive(Debug, Clone, PartialEq, frand_home_base::yew::Properties)]
         pub struct #state_property_name {
-            pub state: frand_home_base::Node<#state_name>,
+            ids: Vec<usize>,
             #(#property_fields,)*
         }
 
@@ -225,17 +241,30 @@ pub fn property_state(
         }
 
         impl frand_home_base::StateProperty for #state_property_name {
+            type State = #state_name;
             type Message = #state_message_name;
         
+            fn clone_state(&self) -> Self::State {
+                Self::State {
+                    #(#impl_state_property_clone_states,)*
+                }
+            }
+
+            fn apply_state(&mut self, state: Self::State) {
+                #(#impl_state_property_applys;)*
+            }
+
+            fn apply_export<Msg: frand_home_base::StateMessage>(&mut self, state: Self::State) -> Msg {
+                self.apply_state(state.clone());
+                Msg::new(self.ids.as_slice(), 0, Box::new(state))
+            }
+
             fn apply_message(&mut self, message: Self::Message) {
                 match message {
                     Self::Message::Error(err) => {
                         log::error!("❗ {}.apply_message: {err}", stringify!(#state_property_name));
                     },
-                    Self::Message::State(value) => {
-                        #(#impl_state_property_applys;)*
-                        self.state.apply(value);
-                    },
+                    Self::Message::State(state) => self.apply_state(state),
                     #(#impl_state_property_apply_cases,)*
                 }
             }
@@ -243,7 +272,7 @@ pub fn property_state(
             fn export_message(&self, message: &mut Self::Message) {
                 match message {
                     Self::Message::Error(err) => *err = format!("❗ Export err from Node is no meaning. err: {err}"),
-                    Self::Message::State(value) => *value = self.state.value().clone(),
+                    Self::Message::State(value) => *value = self.clone_state(),
                     #(#impl_state_property_export_cases,)*
                 }
             }
@@ -258,10 +287,7 @@ pub fn property_state(
                 <Comp as frand_home_base::yew::BaseComponent>::Message: From<Msg>,
             {
                 Self { 
-                    state: frand_home_base::Node::new(
-                        frand_home_base::vec_pushed(&ids, 1), 
-                        context,
-                    ),
+                    ids: frand_home_base::vec_pushed(&ids, 1),
                     #(#impl_new_property_fields,)*
                 }
             }
@@ -270,9 +296,7 @@ pub fn property_state(
                 #[allow(unused_variables)] ids: Vec<usize>,
             ) -> Self {
                 Self { 
-                    state: frand_home_base::Node::new_default(
-                        frand_home_base::vec_pushed(&ids, 1), 
-                    ),
+                    ids: frand_home_base::vec_pushed(&ids, 1),
                     #(#impl_new_default_property_fields,)*
                 }
             }

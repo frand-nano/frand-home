@@ -1,9 +1,11 @@
 use frand_home_base::PropertyState;
 use serde::{Deserialize, Serialize};
 
+use super::playlist_state::PlaylistPageState;
+
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]
 pub struct MusiclistState {
-    pub playlist_id: String,
+    pub playlist_page: PlaylistPageState,
     pub list_items: MusiclistItemsState,
 }
 

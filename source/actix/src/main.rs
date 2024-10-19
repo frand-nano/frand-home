@@ -30,16 +30,10 @@ async fn main() -> anyhow::Result<()> {
 
     log::info!("🚀 start server");
 
-    let tls_server_config = CONFIG.read_tls_server_config()?;   
     let session_secret = CONFIG.session_secret()?;   
      
     let (server, message_sender) = Server::new();
     let server_handle = spawn(server.run());
-
-    let ip = match CONFIG.settings.local_mode {
-        true => "127.0.0.1",
-        false => "0.0.0.0",
-    };
 
     let http_server = HttpServer::new(move || {
         App::new()
@@ -60,9 +54,20 @@ async fn main() -> anyhow::Result<()> {
             .service(oauth::get_oauth)
             .service(route::get_ws)
             .default_service(web::route().to(|_:HttpRequest| HttpResponse::NotFound()))
-    })
-    .bind_rustls_0_22((ip, CONFIG.settings.port), tls_server_config)?
-    .run();
+    });
+    
+
+    let http_server = match CONFIG.settings.local_mode {
+        true => http_server.bind(
+            ("127.0.0.1", CONFIG.settings.port),
+        ),
+        false => http_server.bind_rustls_0_22(
+            ("0.0.0.0", CONFIG.settings.port), 
+            CONFIG.read_tls_server_config()?,
+        ),
+    };
+
+    let http_server = http_server?.run();
 
     let server_handle = async move { 
         server_handle.await

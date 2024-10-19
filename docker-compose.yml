@@ -1,9 +1,0 @@
-services:
-  frand-home:
-    restart: always
-    image: frand-home
-    build: 
-      context: .
-      dockerfile: ./Dockerfile
-    ports:
-      - 4430:4430

@@ -3,8 +3,6 @@ FROM rust:1.81.0-alpine AS chef
 
 WORKDIR /usr/src/project
 
-EXPOSE 4430
-
 RUN set -eux
 RUN apk add --no-cache musl-dev pkgconfig openssl-dev openssl-libs-static
 RUN cargo install cargo-chef
@@ -33,8 +31,4 @@ FROM alpine:3.20
 WORKDIR /usr/local/bin
 
 COPY --from=builder /usr/src/project/target/release/frand-home-actix .
-COPY --from=builder /usr/src/project/dist ./dist
-COPY ./config ./config
-COPY ./res ./res
-
-CMD ["./frand-home-actix"]
+COPY --from=builder /usr/src/project/target/dist ./target/dist

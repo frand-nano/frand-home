@@ -112,7 +112,7 @@ pub fn Musiclist(prop: &MusiclistProperty) -> Html {
 ```
 Control:
 ```rust
-match message {
+match &message {
     // Client Music Musiclist PlaylistPage 패턴의 메시지가 서버에 수신되었을 때 추가 처리:
     // client 로부터 playlistPage의 변경을 요청하는 메시지가 수신되었을 때
     // playlistPage 에 해당하는 playlist_items 를 youtube api 로 얻어서
@@ -122,28 +122,27 @@ match message {
             MusiclistStateMessage::PlaylistPage(_)
         )
     ) => {
+        client_state.apply_message(message.clone());
+        send(&self.senders, &id, SocketStateMessage::Client(message))?;  
+
         // youtube data api 를 이용하여 playlist 데이터를 얻음
         let playlist_items = PlaylistItems::youtube_get(
             &self.client, 
-            &PlaylistPageState {
-                playlist_id: client_state.music.musiclist.playlist_page.playlist_id.value().clone(),
-                page_token: client_state.music.musiclist.playlist_page.page_token.value().clone(),
-            },
+            &client_state.music.musiclist.playlist_page.clone_state(),
         ).await?;
 
         // client_state.music.musiclist.list_items.state 에 playlist_items 값을 넣고
         // 위 동작에 해당하는 message 를 생성
-        let message = client_state.music.musiclist.list_items.state.apply_export(
+        let message = client_state.music.musiclist.list_items.apply_export(
             playlist_items.into(),
-        );
-    
-        log::info!(" > {user} 🔗 Client {}",
-            serde_json::to_string_pretty(&message).unwrap_or_default(),
-        );               
-
+        );          
+                        
         // 클라이언트에 playlist_items 값을 넣는 메시지를 전송
         self.send(&id, message)?;
     },
-    _ => {},
+    _ => {
+        client_state.apply_message(message.clone());
+        send(&self.senders, &id, SocketStateMessage::Client(message))?;  
+    },
 }
 ```

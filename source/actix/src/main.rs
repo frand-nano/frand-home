@@ -1,4 +1,5 @@
 use actix::spawn;
+use anyhow::anyhow;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, middleware::Logger, web::{self, Data}, App, HttpRequest, HttpResponse, HttpServer};
 use authorize::oauth;
@@ -21,10 +22,11 @@ lazy_static! {
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
+    let log4rs_path = &CONFIG.paths.log4rs;
     log4rs::init_file(
-        &CONFIG.paths.log4rs, 
+        log4rs_path, 
         Default::default(),
-    )?;
+    ).map_err(|err| anyhow!("Failed to read log4rs.yml file log4rs_path: {log4rs_path} err: {err}"))?;
 
     log::info!("🚀 start server");
 

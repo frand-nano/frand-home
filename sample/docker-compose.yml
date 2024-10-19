@@ -1,0 +1,21 @@
+name: frand-home
+services:
+  frand-home-bin:
+    image: frand-home-bin
+    build: 
+      context: ../source
+      dockerfile: ../source/Dockerfile
+  frand-home:
+    image: frand-home
+    depends_on: 
+      - frand-home-bin
+    build: 
+      context: ./
+      dockerfile: ./Dockerfile
+    ports:
+      - 4430:4430
+    volumes:
+      - server-data:/usr/local/bin/data
+    restart: always
+volumes:
+    server-data: 

@@ -12,7 +12,7 @@ pub async fn get_index(
         return super::get_login(request).await;
     }
 
-    match NamedFile::open_async("./dist/index.html").await {
+    match NamedFile::open_async("./target/dist/index.html").await {
         Ok(response) => response.into_response(&request),
         Err(err) => {
             log::error!("❗ get_index err: {err}");  
@@ -45,7 +45,7 @@ pub async fn get_index_path(
 
     let (path,) = path.into_inner();  
 
-    match NamedFile::open_async(format!("./dist/frand-home-yew-{path}")).await {
+    match NamedFile::open_async(format!("./target/dist/frand-home-yew-{path}")).await {
         Ok(response) => response.into_response(&request),
         Err(err) => {
             log::error!("❗ get_index_path path: {path}, err: {err}");  

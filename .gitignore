@@ -1,6 +1,7 @@
-/Cargo.lock
-/target
-/dist
-/config
-/config_dev
-/data
+/source/Cargo.lock
+/source/target
+/publish
+/dev
+/source/config
+/source/data
+/source/res

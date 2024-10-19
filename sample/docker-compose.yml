@@ -4,7 +4,7 @@ services:
     image: frand-home-bin
     build: 
       context: ../source
-      dockerfile: ../source/Dockerfile
+      dockerfile: ./Dockerfile
   frand-home:
     image: frand-home
     depends_on: 

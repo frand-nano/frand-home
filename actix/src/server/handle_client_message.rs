@@ -24,6 +24,7 @@ impl Server {
             None => bail!("❗ users not contains id:{id}"),
         };    
 
+        let senders = &self.senders;
         match self.client_states.get_mut(&id) {
             Some(client_state) => {
                 match &message {
@@ -48,7 +49,7 @@ impl Server {
                     },
                     _ => {
                         client_state.apply_message(message.clone());
-                        send(&self.senders, &id, SocketStateMessage::Client(message))?;  
+                        send(senders, &id, SocketStateMessage::Client(message))?;  
                     },
                 }
             },

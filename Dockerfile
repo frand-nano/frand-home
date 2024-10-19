@@ -34,7 +34,10 @@ WORKDIR /usr/local/bin
 
 COPY --from=builder /usr/src/project/target/release/frand-home-actix .
 COPY --from=builder /usr/src/project/dist ./dist
-COPY ./config ./config
+
 COPY ./res ./res
+COPY ./config ./config
+
+VOLUME /usr/local/bin/data
 
 CMD ["./frand-home-actix"]

@@ -14,7 +14,7 @@ appenders:
     filters:
       - kind: threshold
         level: debug
-    path: "./log/debug.log"
+    path: "./data/log/debug.log"
     encoder:
       pattern: "📋{d} {l} {t}{n}{m}{n}{n}"
 
@@ -23,7 +23,7 @@ appenders:
     filters:
       - kind: threshold
         level: info
-    path: "./log/info.log"
+    path: "./data/log/info.log"
     encoder:
       pattern: "📋{d} {l} {t}{n}{m}{n}{n}"
 
@@ -32,7 +32,7 @@ appenders:
     filters:
       - kind: threshold
         level: warn
-    path: "./log/warn.log"
+    path: "./data/log/warn.log"
     encoder:
       pattern: "📋{d} {l} {t}{n}{m}{n}{n}"
 
@@ -41,7 +41,7 @@ appenders:
     filters:
       - kind: threshold
         level: error
-    path: "./log/error.log"
+    path: "./data/log/error.log"
     encoder:
       pattern: "📋{d} {l} {t}{n}{m}{n}{n}"
 

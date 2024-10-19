@@ -7,3 +7,7 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - 4430:4430
+    volumes:
+      - server-data:/usr/local/bin/data
+volumes:
+    server-data: 

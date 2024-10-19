@@ -61,8 +61,10 @@ impl Config {
         .unwrap_or(default_dir.to_owned());
 
         let path = format!("./{dir}/Config.toml");
+        let config = read_to_string(&path)
+        .map_err(|err| anyhow!("Failed to read config file path: {path} err: {err}"))?;
 
-        toml::from_str::<Self>(&read_to_string(&path)?)
+        toml::from_str::<Self>(&config)
         .map_err(|err| anyhow!("Failed to deserialize config file path: {path} err: {err}"))
     }
 

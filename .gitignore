@@ -1,6 +1,6 @@
+/Cargo.lock
 /target
+/dist
 /config
 /config_dev
-/log
-/dist
-Cargo.lock
+/data

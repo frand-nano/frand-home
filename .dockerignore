@@ -1,5 +1,6 @@
-log
-target
-dist
-config_dev
-config_sample
+/Cargo.lock
+/target
+/dist
+/config_sample
+/config_dev
+/data

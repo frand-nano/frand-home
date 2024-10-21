@@ -59,6 +59,9 @@ impl Component for App {
                     SocketStateMessage::Opened(_) => {},
                     SocketStateMessage::Closed(_) => {},
                     SocketStateMessage::Error(_) => {},
+                    SocketStateMessage::Alert(message) => {
+                        gloo_dialogs::alert(&message);
+                    },
                 }
             },
         }

@@ -7,12 +7,12 @@ pub fn view(prop: &AppProperty) -> Html {
         <div>
             <TaskBar
                 user = { prop.socket.client.user.clone() }
-                playlist_visible = { prop.socket.client.music.playlist.visible.clone() }
+                task_bar = { prop.socket.client.task_bar.clone() }
             />     
             <div style="display:flex; flex-direction: row;">
                 <Playlist 
-                    visible = { prop.socket.client.music.playlist.visible.clone() }
-                    list_items = { prop.socket.client.music.playlist.list_items.clone() }
+                    visible = { prop.socket.client.task_bar.playlist_visible.clone() }
+                    list_items = { prop.socket.server.music.playlist.list_items.clone() }
                     musiclist_playlist_id = { prop.socket.client.music.musiclist.playlist_page.playlist_id.clone() }
                 />
                 <div>

@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]
 pub struct PlaylistState {
-    pub visible: bool,
     pub list_items: PlaylistItemsState,
 }
 

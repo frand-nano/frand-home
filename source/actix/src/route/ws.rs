@@ -1,7 +1,6 @@
 use actix_session::SessionExt;
 use actix_web::{get, web::{Data, Payload}, HttpRequest, HttpResponse};
 use actix_ws::{handle, Message, MessageStream, Session};
-use awc::Client;
 use frand_home_common::state::socket_state::SocketStateMessage;
 use futures_util::StreamExt;
 use tokio::{sync::mpsc::{unbounded_channel, UnboundedSender}, task::spawn_local};
@@ -12,7 +11,6 @@ pub async fn get_ws(
     request: HttpRequest, 
     stream: Payload,
     server_sender: Data<UnboundedSender<ServerMessage>>,
-    client: Data<Client>,
 ) -> actix_web::Result<HttpResponse> {
     let session = request.get_session();
     if !session.client_whitelist() {
@@ -23,13 +21,12 @@ pub async fn get_ws(
     
     let (response, session, stream) = handle(&request, stream)?;
 
-    spawn_message_loop(&client, user, (**server_sender).clone(), session, stream).await;
+    spawn_message_loop(user, (**server_sender).clone(), session, stream).await;
 
     Ok(response)
 }
 
 async fn spawn_message_loop(
-    client: &Client,
     user: User, 
     server_sender: UnboundedSender<ServerMessage>,
     session: Session, 
@@ -38,7 +35,7 @@ async fn spawn_message_loop(
     log::info!("{user} 🔗 {}", user.additional_info_text());
 
     let (client_sender, mut client_receiver) = unbounded_channel();
-    let server_handle = match ServerHandle::new(client, user.clone(), server_sender, client_sender).await {
+    let server_handle = match ServerHandle::new(user.clone(), server_sender, client_sender) {
         Ok(server_handle) => server_handle,
         Err(err) => return log::error!("❗ {user} 🔗 ServerHandle::new err: {err}"),
     };

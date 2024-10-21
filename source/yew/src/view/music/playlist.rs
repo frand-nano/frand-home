@@ -1,4 +1,4 @@
-use frand_home_common::{state::client::music::playlist_state::PlaylistItemsState, Node, State};
+use frand_home_common::{state::server::music::playlist_state::PlaylistItemsState, Node, State};
 use yew::{function_component, html, Html, Properties};
 
 #[derive(Properties, PartialEq)]

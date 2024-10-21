@@ -1,7 +1,7 @@
 use frand_home_base::PropertyState;
 use serde::{Deserialize, Serialize};
 
-use super::playlist_state::PlaylistPageState;
+use crate::state::server::music::playlist_state::PlaylistPageState;
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]
 pub struct MusiclistState {

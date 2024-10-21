@@ -9,5 +9,5 @@ pub struct SocketState {
     pub client: ClientState,
     pub opened: (),
     pub closed: (),
+    pub alert: String,
 }
-

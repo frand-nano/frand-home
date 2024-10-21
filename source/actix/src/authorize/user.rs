@@ -46,6 +46,8 @@ impl From<User> for UserState {
     fn from(value: User) -> Self {
         UserState { 
             name: value.name,
+            server_whitelist: value.server_whitelist,
+            client_whitelist: value.client_whitelist,
         }
     }
 }

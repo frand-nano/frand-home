@@ -1,15 +1,23 @@
 use anyhow::bail;
-use frand_home_common::state::{client::{client_state::{ClientState, ClientStateMessage, ClientStateProperty}, music::playlist_state::PlaylistState}, socket_state::{SocketStateMessage, SocketStateProperty}};
+use frand_home_common::{
+    state::{
+        client::client_state::ClientStateProperty, 
+        server::music::playlist_state::PlaylistState, 
+        socket_state::{SocketState, SocketStateMessage, SocketStateProperty},
+    },
+    StateProperty,
+};
 
 use std::collections::HashMap;
 use awc::Client;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use uuid::Uuid;
 
-use crate::{authorize::user::User, youtube::playlist::Playlist, CONFIG};
+use crate::{authorize::user::User, mysql::Database, server::{handle_client_message::handle_client_message, handle_server_message::handle_server_message}, youtube::playlist::Playlist, CONFIG};
 
 pub struct Server {
     pub client: Client,
+    pub db: Database,
     pub receiver: UnboundedReceiver<ServerMessage>,
     pub users: HashMap<Uuid, User>,
     pub senders: HashMap<Uuid, UnboundedSender<SocketStateMessage>>,
@@ -32,17 +40,54 @@ pub struct ServerMessage {
 }
 
 impl Server {
-    pub fn new() -> (Self, UnboundedSender<ServerMessage>) {
+    pub async fn new() -> anyhow::Result<(Self, UnboundedSender<ServerMessage>)> {
         let (sender, receiver) = unbounded_channel();
+        
+        let client = Client::default();
+
+        let db = match CONFIG.settings.local_mode {
+            true => Database::new("localhost")?,
+            false => Database::new("frand-home-mysql")?,
+        };
+
+        let mut socket_state = SocketStateProperty::default();
+        socket_state.apply_state(Self::init_socket_state(&client).await?);
+
         let server = Self {
             client: Client::default(),
+            db,
             receiver,      
             users: HashMap::new(),     
             senders: HashMap::new(),    
-            socket_state: Default::default(), 
+            socket_state, 
             client_states: HashMap::new(),     
         };
-        (server, sender)
+        
+        Ok((server, sender))
+    }
+
+    async fn init_socket_state(
+        client: &Client,
+    ) -> anyhow::Result<SocketState> {
+        let mut result = SocketState::default();
+
+        result.server.music.playlist = PlaylistState {
+            list_items: Playlist::youtube_get(client, &CONFIG.settings.playlists).await?.into(), 
+        };
+
+        Ok(result)
+    }
+
+    fn init_client_socket_state(
+        &self,
+        user: &User,
+    ) -> anyhow::Result<SocketState> {
+        let mut result = self.socket_state.clone_state();    
+
+        result.client.user = user.clone().into();
+        result.client.task_bar.playlist_visible = true;
+
+        Ok(result)
     }
 
     pub async fn run(mut self) -> anyhow::Result<()> {
@@ -50,21 +95,6 @@ impl Server {
             self.handle_message(message).await?;
         }
         Ok(())
-    }
-
-    pub fn send(
-        &self,
-        id: &Uuid,
-        message: SocketStateMessage,
-    ) -> anyhow::Result<()> {
-        send(&self.senders, id, message)
-    }
-
-    pub fn broadcast(
-        &self,
-        message: SocketStateMessage,
-    ) -> anyhow::Result<()> {
-        broadcast(&self.senders, message)
     }
 
     async fn handle_message(
@@ -78,11 +108,41 @@ impl Server {
                     log::info!("{user} 🔗 State");                 
                 }                 
             },
-            SocketStateMessage::Server(server_state_message) => {
-                self.handle_server_message(&id, server_state_message).await?;  
+            SocketStateMessage::Server(message) => {
+                match self.users.get(&id) {
+                    Some(user) => if user.server_whitelist() {   
+                        log::info!("{user} 🔗 Server {}",
+                            serde_json::to_string_pretty(&message).unwrap_or_default(),
+                        );          
+                        handle_server_message(
+                            &self.client, 
+                            &self.senders, 
+                            &mut self.socket_state, 
+                            message,
+                        ).await?;  
+                    } else {
+                        return Ok(log::warn!("⛔ Unauthorized server message inbound"));  
+                    },
+                    _ => bail!("❗ Unregistered id:{id}"),
+                };    
             },
-            SocketStateMessage::Client(client_state_message) => {
-                self.handle_client_message(&id, client_state_message).await?;  
+            SocketStateMessage::Client(message) => {
+                match (self.users.get(&id), self.senders.get(&id), self.client_states.get_mut(&id)) {
+                    (Some(user), Some(sender), Some(client_state)) => if user.client_whitelist() {   
+                        log::info!("{user} 🔗 Client {}",
+                            serde_json::to_string_pretty(&message).unwrap_or_default(),
+                        );         
+                        handle_client_message(
+                            &self.client, 
+                            sender, 
+                            client_state, 
+                            message,
+                        ).await?;  
+                    } else {
+                        return Ok(log::warn!("⛔ Unauthorized client message inbound"));  
+                    },
+                    _ => bail!("❗ Unregistered id:{id}"),
+                };   
             },
             SocketStateMessage::Opened(_) => {
                 if let Some(user) = message.user {
@@ -90,8 +150,15 @@ impl Server {
                     if user.client_whitelist() {
                         if let Some(sender) = message.sender { 
                             self.users.insert(id, user.clone());         
-                            self.senders.insert(id, sender);      
-                            self.client_states.insert(id, self.socket_state.client.clone());  
+                            self.senders.insert(id, sender.clone());      
+
+                            let socket_state = self.init_client_socket_state(&user)?;
+                            let mut client_state_property = self.socket_state.client.clone();
+                            client_state_property.apply_state(socket_state.client.clone());
+
+                            self.client_states.insert(id, client_state_property);  
+
+                            sender.send(SocketStateMessage::State(socket_state))?;
                         }
                     }                    
                 }
@@ -111,14 +178,14 @@ impl Server {
                     log::info!("{user} 🔗 Error err: {err}");   
                 }
             },
+            SocketStateMessage::Alert(_) => {},
         }
         Ok(())
     }
 }
 
 impl ServerHandle {
-    pub async fn new(
-        client: &Client,
+    pub fn new(
         user: User,
         server_sender: UnboundedSender<ServerMessage>,    
         socket_sender: UnboundedSender<SocketStateMessage>,    
@@ -138,10 +205,6 @@ impl ServerHandle {
             }
         )?;
 
-        let client_state = init_client_state(client, &result.user).await?;
-
-        result.send(SocketStateMessage::Client(ClientStateMessage::State(client_state)))?;
-
         Ok(result)
     }
 
@@ -155,30 +218,6 @@ impl ServerHandle {
             }
         )?)
     }
-}
-
-async fn init_client_state(
-    client: &Client,
-    user: &User,
-) -> anyhow::Result<ClientState> {
-    let mut result = ClientState::default();
-    result.user = user.clone().into();
-    result.music.playlist = PlaylistState {
-        visible: true,
-        list_items: Playlist::youtube_get(client, &CONFIG.settings.playlists).await?.into(), 
-    };
-    Ok(result)
-}
-
-pub fn send(
-    senders: &HashMap<Uuid, UnboundedSender<SocketStateMessage>>,
-    id: &Uuid,
-    message: SocketStateMessage,
-) -> anyhow::Result<()> {
-    Ok(match senders.get(id) {
-        Some(sender) => sender.send(message)?,
-        None => bail!("❗ senders not contains id:{id}"),
-    })
 }
 
 pub fn broadcast(

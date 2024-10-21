@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use awc::Client;
-use frand_home_common::state::client::music::playlist_state::{PlaylistItemState, PlaylistItemsState};
+use frand_home_common::state::server::music::playlist_state::{PlaylistItemState, PlaylistItemsState};
 use serde::{Deserialize, Serialize};
 
 use crate::CONFIG;

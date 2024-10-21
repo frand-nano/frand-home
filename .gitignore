@@ -2,6 +2,7 @@
 /source/target
 /publish
 /dev
+/source/.env
 /source/config
 /source/data
 /source/res

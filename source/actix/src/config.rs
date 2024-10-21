@@ -39,18 +39,45 @@ pub struct Keys {
     pub client_secret: String,    
     pub session_secret: String,
     pub youtube_api_key: String,
+    mysql_user: Option<String>,
+    mysql_pass: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct Settings {
     pub local_mode: bool,
-    pub port: u16,
     pub server_whitelists: Vec<String>,
     pub client_whitelists_all: bool,
     pub client_whitelists: Vec<String>,
     pub playlists: Vec<String>,
     pub youtube_playlists_max_results: u32,
     pub youtube_playlist_items_max_results: u32,
+    port: Option<u16>,
+}
+
+impl Keys {
+    pub fn mysql_user(&self) -> &str {
+        match &self.mysql_user {
+            Some(value) => value,
+            None => unreachable!(),
+        }
+    }
+
+    pub fn mysql_pass(&self) -> &str {
+        match &self.mysql_pass {
+            Some(value) => value,
+            None => unreachable!(),
+        }
+    }
+}
+
+impl Settings {
+    pub fn port(&self) -> u16 {
+        match &self.port {
+            Some(value) => *value,
+            None => unreachable!(),
+        }
+    }
 }
 
 impl Config {
@@ -64,8 +91,22 @@ impl Config {
         let config = read_to_string(&path)
         .map_err(|err| anyhow!("Failed to read config file path: {path} err: {err}"))?;
 
-        toml::from_str::<Self>(&config)
-        .map_err(|err| anyhow!("Failed to deserialize config file path: {path} err: {err}"))
+        let mut config = toml::from_str::<Self>(&config)
+        .map_err(|err| anyhow!("Failed to deserialize config file path: {path} err: {err}"))?;
+                
+        config.keys.mysql_user = Some(dotenv::var("FRAND_HOME_MYSQL_USER").map_err(
+            |err| anyhow!("❗ Config.keys.mysql_user is None err: {err}"),
+        )?);
+        
+        config.keys.mysql_pass = Some(dotenv::var("FRAND_HOME_MYSQL_PASSWORD").map_err(
+            |err| anyhow!("❗ Config.keys.mysql_pass is None err: {err}"),
+        )?);
+
+        config.settings.port = Some(dotenv::var("FRAND_HOME_SERVER_PORT").map_err(
+            |err| anyhow!("❗ Config.settings.port is None err: {err}"),
+        )?.parse()?);
+
+        Ok(config)
     }
 
     pub fn read_tls_server_config(&self) -> anyhow::Result<ServerConfig> {
@@ -94,7 +135,7 @@ impl Config {
 
     pub fn oauth_redirect_with_port(&self) -> anyhow::Result<String> {
         let oauth_redirect = &self.uris.oauth_redirect;
-        let port = self.settings.port;
+        let port = self.settings.port();
 
         let uri = Uri::from_str(oauth_redirect)?;
         let scheme = uri.scheme_str().ok_or_else(|| 

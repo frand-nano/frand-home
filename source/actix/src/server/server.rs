@@ -6,10 +6,11 @@ use awc::Client;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use uuid::Uuid;
 
-use crate::{authorize::user::User, youtube::playlist::Playlist, CONFIG};
+use crate::{authorize::user::User, mysql::Database, youtube::playlist::Playlist, CONFIG};
 
 pub struct Server {
     pub client: Client,
+    pub db: Database,
     pub receiver: UnboundedReceiver<ServerMessage>,
     pub users: HashMap<Uuid, User>,
     pub senders: HashMap<Uuid, UnboundedSender<SocketStateMessage>>,
@@ -32,17 +33,25 @@ pub struct ServerMessage {
 }
 
 impl Server {
-    pub fn new() -> (Self, UnboundedSender<ServerMessage>) {
+    pub fn new() -> anyhow::Result<(Self, UnboundedSender<ServerMessage>)> {
         let (sender, receiver) = unbounded_channel();
+
+        let db = match CONFIG.settings.local_mode {
+            true => Database::new("localhost")?,
+            false => Database::new("frand-home-mysql")?,
+        };
+        
         let server = Self {
             client: Client::default(),
+            db,
             receiver,      
             users: HashMap::new(),     
             senders: HashMap::new(),    
             socket_state: Default::default(), 
             client_states: HashMap::new(),     
         };
-        (server, sender)
+        
+        Ok((server, sender))
     }
 
     pub async fn run(mut self) -> anyhow::Result<()> {

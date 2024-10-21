@@ -21,7 +21,6 @@ youtube_api_key = "" #youtube data api v3 key
 
 [settings]
 local_mode = false
-port = 4430
 server_whitelists = [
     #id in [uris]oauth_userinfo
 ]
@@ -32,5 +31,5 @@ client_whitelists = [
 playlists = [
     #playlist_id 
 ]
-youtube_playlists_max_results = 25
-youtube_playlist_items_max_results = 25
+youtube_playlists_max_results = 25 #0~50
+youtube_playlist_items_max_results = 25 #0~50

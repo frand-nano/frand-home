@@ -21,11 +21,12 @@ youtube_api_key = "" #youtube data api v3 key
 
 [settings]
 local_mode = false
-server_whitelists = [
-    #id in [uris]oauth_userinfo
-]
+client_require_auth = true
 client_whitelists_all = false
 client_whitelists = [
+    #id in [uris]oauth_userinfo
+]
+server_whitelists = [
     #id in [uris]oauth_userinfo
 ]
 playlists = [

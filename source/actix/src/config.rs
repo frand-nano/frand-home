@@ -46,9 +46,10 @@ pub struct Keys {
 #[derive(Deserialize)]
 pub struct Settings {
     pub local_mode: bool,
-    pub server_whitelists: Vec<String>,
+    pub client_require_auth: bool,
     pub client_whitelists_all: bool,
     pub client_whitelists: Vec<String>,
+    pub server_whitelists: Vec<String>,
     pub playlists: Vec<String>,
     pub youtube_playlists_max_results: u32,
     pub youtube_playlist_items_max_results: u32,

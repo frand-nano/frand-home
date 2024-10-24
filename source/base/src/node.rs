@@ -37,9 +37,12 @@ impl<V: NodeValue> Node<V> {
         self.node.value = value.clone();
     }
 
+    pub fn export<Msg: StateMessage>(&mut self, value: V) -> Msg {
+        Msg::new(self.node.ids.as_slice(), 0, Box::new(value))
+    }
+
     pub fn apply_export<Msg: StateMessage>(&mut self, value: V) -> Msg {
         self.node.value = value.clone();
-        log::info!("{:#?}", self);
         Msg::new(self.node.ids.as_slice(), 0, Box::new(value))
     }
 

@@ -23,14 +23,24 @@ impl Display for User {
         let icon = if self.server_whitelist {
             "💎"
         } else if self.client_whitelist {
-            "👤"
-        } else if self.id != Default::default() {
-            "🌐"
+            if self.id != Default::default() {
+                "👤"
+            } else {
+                "🌐"
+            }            
         } else {
-            "❓"        
+            if self.id != Default::default() {
+                "🌐"
+            } else { 
+                "❓"  
+            }            
         };
         
-        let name = &self.name;
+        let name = if self.id != Default::default() {
+            &self.name
+        } else { 
+            &self.ip 
+        };
         
         write!(f, "{icon} {name}")
     }

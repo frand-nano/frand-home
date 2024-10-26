@@ -11,16 +11,25 @@ pub struct TaskBarProperty {
 pub fn TaskBar(prop: &TaskBarProperty) -> Html {
     let user = prop.user.clone();
 
-    let playlist_visible = prop.task_bar.playlist_visible.clone();
-    let playlist_visible_value = *playlist_visible.value();
-    let onclick_playlist_visible = move |_| {
-        playlist_visible.emit(!playlist_visible_value)
+    let user = if *user.authenticated.value() {
+        html! {
+            <div style="display:flex; flex-direction: row;">
+                <img src={user.picture.value().clone()} />
+                <div style="display:flex; flex-direction: column;">
+                    <p>{user.name.value()}</p>
+                    <p>{user.email.value()}</p>
+                </div>
+            </div>
+        }
+    } else {
+        html! {
+            <a href="/login">
+                <input type="button" value="Login" />
+            </a>
+        }
     };
 
     html! {
-        <div>
-            <p>{user.name.value()}</p>
-            <button onclick={onclick_playlist_visible}>{"Playlist"}</button>
-        </div>
+        {user}
     }
 }

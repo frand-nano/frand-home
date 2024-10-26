@@ -41,6 +41,7 @@ pub struct Keys {
     pub youtube_api_key: String,
     mysql_user: Option<String>,
     mysql_pass: Option<String>,
+    mysql_database: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -66,6 +67,13 @@ impl Keys {
 
     pub fn mysql_pass(&self) -> &str {
         match &self.mysql_pass {
+            Some(value) => value,
+            None => unreachable!(),
+        }
+    }
+
+    pub fn mysql_database(&self) -> &str {
+        match &self.mysql_database {
             Some(value) => value,
             None => unreachable!(),
         }
@@ -101,6 +109,10 @@ impl Config {
         
         config.keys.mysql_pass = Some(dotenv::var("FRAND_HOME_MYSQL_PASSWORD").map_err(
             |err| anyhow!("❗ Config.keys.mysql_pass is None err: {err}"),
+        )?);
+        
+        config.keys.mysql_database = Some(dotenv::var("FRAND_HOME_MYSQL_DATABASE").map_err(
+            |err| anyhow!("❗ Config.keys.mysql_database is None err: {err}"),
         )?);
 
         config.settings.port = Some(dotenv::var("FRAND_HOME_SERVER_PORT").map_err(

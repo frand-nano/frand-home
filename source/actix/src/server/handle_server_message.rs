@@ -10,14 +10,14 @@ pub async fn handle_server_message(
     _client: &Client,
     senders: &HashMap<Uuid, UnboundedSender<SocketStateMessage>>,
     socket_state: &mut SocketStateProperty,
-    message: ServerStateMessage,
-) -> anyhow::Result<()> {    
-    match &message {
-        _ => {
-            socket_state.server.apply_message(message.clone());
-            broadcast(senders, SocketStateMessage::Server(message))?;
-        },
+    server_message: ServerStateMessage,
+) -> anyhow::Result<()> {   
+    socket_state.server.apply_message(server_message.clone());
+    broadcast(senders, SocketStateMessage::Server(server_message.clone()))?;
+
+    match server_message {
+        _ => {},
     }
-    
+
     Ok(()) 
 }

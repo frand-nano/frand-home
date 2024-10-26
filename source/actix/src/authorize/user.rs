@@ -14,6 +14,7 @@ pub struct User {
 }
 
 impl User {
+    pub fn authenticated(&self) -> bool { self.id != Default::default() }
     pub fn server_whitelist(&self) -> bool { self.server_whitelist }
     pub fn client_whitelist(&self) -> bool { self.client_whitelist }
 }
@@ -23,16 +24,24 @@ impl Display for User {
         let icon = if self.server_whitelist {
             "💎"
         } else if self.client_whitelist {
-            "👤"
-        } else if self.id != Default::default() {
-            "🌐"
+            if self.authenticated() {
+                "👤"
+            } else {
+                "🌐"
+            }            
         } else {
-            "❓"        
+            if self.authenticated() {
+                "🌐"
+            } else { 
+                "❓"  
+            }            
         };
         
-        let name = &self.name;
-        
-        write!(f, "{icon} {name}")
+        if self.authenticated() {
+            write!(f, "{icon} {}", self.name)            
+        } else { 
+            write!(f, "{icon} {}({})", self.ip, self.id)
+        }
     }
 }
 
@@ -45,7 +54,10 @@ impl PartialEq for User {
 impl From<User> for UserState {
     fn from(value: User) -> Self {
         UserState { 
+            authenticated: value.authenticated(),
             name: value.name,
+            email: value.email,
+            picture: value.picture,
             server_whitelist: value.server_whitelist,
             client_whitelist: value.client_whitelist,
         }

@@ -15,17 +15,17 @@ pub async fn handle_client_message(
     client: &Client,
     sender: &UnboundedSender<SocketStateMessage>,
     client_state: &mut ClientStateProperty,
-    message: ClientStateMessage,
-) -> anyhow::Result<()> {        
-    match &message {
+    client_message: ClientStateMessage,
+) -> anyhow::Result<()> {    
+    client_state.apply_message(client_message.clone());
+    sender.send(SocketStateMessage::Client(client_message.clone()))?;  
+
+    match client_message {
         ClientStateMessage::Music(
             ClientMusicStateMessage::Musiclist(
                 MusiclistStateMessage::PlaylistPage(_)
             )
         ) => {
-            client_state.apply_message(message.clone());
-            sender.send(SocketStateMessage::Client(message))?;  
-
             let playlist_items = PlaylistItems::youtube_get(
                 client, 
                 &client_state.music.musiclist.playlist_page.clone_state(),
@@ -37,10 +37,7 @@ pub async fn handle_client_message(
                          
             sender.send(message)?;  
         },
-        _ => {
-            client_state.apply_message(message.clone());
-            sender.send(SocketStateMessage::Client(message))?;  
-        },
+        _ => {},
     }
 
     Ok(())

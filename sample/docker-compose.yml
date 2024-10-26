@@ -12,6 +12,7 @@ services:
       MYSQL_ROOT_HOST: "%"
       MYSQL_USER: ${FRAND_HOME_MYSQL_USER}
       MYSQL_PASSWORD: ${FRAND_HOME_MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${FRAND_HOME_MYSQL_DATABASE}      
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
       timeout: 20s

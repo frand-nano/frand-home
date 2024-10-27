@@ -53,7 +53,7 @@ impl Server {
         socket_state.apply_state(Self::init_socket_state(&client).await?);
 
         let server = Self {
-            client: Client::default(),
+            client,
             db,
             receiver,      
             users: HashMap::new(),     
@@ -73,6 +73,8 @@ impl Server {
         result.server.music.playlist = PlaylistState {
             list_items: Playlist::youtube_get(client, &CONFIG.settings.playlists).await?.into(), 
         };
+
+        result.client.task_bar.playlist_visible = true;
 
         Ok(result)
     }

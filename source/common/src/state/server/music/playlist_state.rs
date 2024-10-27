@@ -15,6 +15,7 @@ pub struct PlaylistItemsState {
 pub struct PlaylistItemState {
     pub playlist_id: String,
     pub title: String,
+    pub refresh: bool,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]

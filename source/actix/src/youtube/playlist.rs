@@ -65,6 +65,7 @@ impl From<PlaylistItem> for PlaylistItemState {
         Self {
             playlist_id: value.id,
             title: value.snippet.title,
+            refresh: false,
         }
     }
 }

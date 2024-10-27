@@ -103,6 +103,7 @@ impl<V: NodeValue> VecNode<V> {
     pub fn apply_item_export<Msg: StateMessage>(&mut self, index: usize, item: V) -> Msg {
         self.node.items[index] = item.clone();
         let ids = vec_pushed(&self.node.ids, 2);
+        let ids = vec_pushed(&ids, index);
         Msg::new(ids.as_slice(), 0, Box::new(item))
     }
 }

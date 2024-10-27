@@ -99,7 +99,6 @@ impl Server {
         let mut result = self.socket_state.clone_state();    
 
         result.client.user = user.clone().into();
-        result.client.task_bar.playlist_visible = true;
 
         Ok(result)
     }

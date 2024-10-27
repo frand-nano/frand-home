@@ -16,18 +16,34 @@ pub fn Playlist(prop: &PlaylistProperty) -> Html {
         visible.emit(!visible_value)
     };
 
+    let callback_item = prop.list_items.items.callback_item();
     let items: Vec<_> = prop.list_items.items.items().clone().into_iter()
-    .map(|item| {
+    .enumerate()
+    .map(|(index, item)| {
         let musiclist_playlist_id = prop.musiclist_playlist_id.clone();
         let title = item.title.clone();
         let playlist_id = item.playlist_id.clone();
         let onclick_playlist = move |_| {
             musiclist_playlist_id.emit(playlist_id.clone())
         };
+
+        let item_refresh = item.refresh;
+        let callback_item = callback_item.clone();
+        let onclick_item_refresh = move |_| {
+            let mut item = item.clone();
+            item.refresh = true;
+            callback_item.emit((index, item));
+        };
+
         html! {
-            <button onclick={onclick_playlist}>
-            {title}
-            </button>
+            <div>   
+                <button disabled={item_refresh} onclick={onclick_item_refresh}> 
+                {"🔄"}
+                </button>
+                <button disabled={item_refresh} onclick={onclick_playlist}>
+                {title}
+                </button>
+            </div>
         }
     }).collect(); 
 

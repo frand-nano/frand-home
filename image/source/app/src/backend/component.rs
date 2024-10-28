@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use frand_home_music::backend::component::Music;
-use frand_home_state::{State, StateComponent};
+use frand_home_state::State;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
@@ -12,11 +12,6 @@ use super::config::Config;
 pub struct App {
     pub config: &'static Config,
     pub music: Music,
-}
-
-impl StateComponent for App {        
-    type ServerState = ServerState;
-    type ClientState = ClientState;    
 }
 
 impl App {

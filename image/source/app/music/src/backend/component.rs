@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use awc::Client;
-use frand_home_state::{State, StateComponent, StateProperty, VecMessage};
+use frand_home_state::{State, StateProperty, VecMessage};
 use mysql::Pool;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
@@ -14,11 +14,6 @@ pub struct Music {
     pub config: &'static Config,
     pub client: Client,
     pub pool: Pool,
-}
-
-impl StateComponent for Music {        
-    type ServerState = ServerState;
-    type ClientState = ClientState;
 }
 
 impl Music {    
@@ -73,12 +68,11 @@ impl Music {
                 if item.refresh {
                     item.refresh = false;
                     let message: Msg = prop.playlist.list_items.items.apply_item_export(
-                        index, 
-                        item,
+                        index, item,
                     );          
                                 
                     for sender in senders.values() {
-                        sender.send(message.clone()).unwrap();
+                        sender.send(message.clone())?;
                     }
                 }
             },
@@ -105,7 +99,7 @@ impl Music {
                     playlist_items.into(),
                 );          
                                 
-                sender.send(message).unwrap();  
+                sender.send(message)?;  
             },
             _ => {},
         })

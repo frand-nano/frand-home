@@ -1,6 +1,6 @@
 use std::any::Any;
 
-pub trait StateMessage: Clone {
+pub trait StateMessage: 'static + Clone + Send + Sync {
     fn error(err: String) -> Self;
     
     fn new(

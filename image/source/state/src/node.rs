@@ -4,7 +4,7 @@ use yew::{BaseComponent, Callback, Context, Properties};
 
 use crate::state::StateMessage;
 
-pub trait NodeValue: 'static + Debug + Default + Clone + PartialEq + Send {}
+pub trait NodeValue: 'static + Debug + Default + Clone + PartialEq + Send + Sync {}
 
 #[derive(Debug, Clone, Properties)]
 pub struct Node<V: NodeValue> {

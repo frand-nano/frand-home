@@ -3,7 +3,7 @@ services:
   frand-home-bin:
     image: frand-home-bin
     build: 
-      context: ../source
+      context: ../image
       dockerfile: ./Dockerfile
   frand-home-mysql:
     image: mysql
@@ -11,8 +11,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${FRAND_HOME_MYSQL_PASSWORD}
       MYSQL_ROOT_HOST: "%"
       MYSQL_USER: ${FRAND_HOME_MYSQL_USER}
-      MYSQL_PASSWORD: ${FRAND_HOME_MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${FRAND_HOME_MYSQL_DATABASE}      
+      MYSQL_PASSWORD: ${FRAND_HOME_MYSQL_PASSWORD}   
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
       timeout: 20s

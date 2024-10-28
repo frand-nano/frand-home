@@ -1,0 +1,4 @@
+[build]
+target = "source/yew/index.html"
+release = true
+dist = "target/dist"

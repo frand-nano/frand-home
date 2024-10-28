@@ -1,8 +1,8 @@
-/source/Cargo.lock
-/source/target
+/image/Cargo.lock
+/image/target
 /publish
 /dev
-/source/.env
-/source/config
-/source/data
-/source/res
+/image/.env
+/image/config
+/image/data
+/image/res

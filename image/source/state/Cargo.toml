@@ -1,0 +1,22 @@
+[package]
+name = "frand-home-state"
+
+[package.version]
+workspace = true
+[package.authors]
+workspace = true
+[package.edition]
+workspace = true
+
+[dependencies]
+frand-home-macro = { path = "macro" }
+serde = "1"
+yew = "0.21"
+log = "0.4.6"
+anyhow = "1.0"
+trait-variant = "0.1.2"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.24.2", features = ["rt", "time", "macros"] }
+uuid = { version = "1.8.0", features = ["v4"] }
+awc = { version = "3.4.0" }

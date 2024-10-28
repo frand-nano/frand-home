@@ -1,0 +1,9 @@
+[music]
+youtube_playlists = "https://www.googleapis.com/youtube/v3/playlists"
+youtube_playlist_items = "https://www.googleapis.com/youtube/v3/playlistItems"
+youtube_api_key = "" #youtube data api v3 key
+youtube_playlists_max_results = 25
+youtube_playlist_items_max_results = 25
+playlists = [
+    #playlist_id 곡
+]

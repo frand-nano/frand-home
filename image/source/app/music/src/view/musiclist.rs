@@ -15,6 +15,7 @@ pub fn MusiclistView(prop: &MusiclistProperty) -> Html {
         let page_token = prop.musiclist.playlist_page.page_token.clone();
         let prev_page_token = prop.musiclist.list_items.prev_page_token.clone_state();
         let prev_page_disabled = prev_page_token.is_none();
+        
         let onclick_prev_page = move |_| {
             page_token.emit(prev_page_token.clone());
         };
@@ -22,6 +23,7 @@ pub fn MusiclistView(prop: &MusiclistProperty) -> Html {
         let page_token = prop.musiclist.playlist_page.page_token.clone();
         let next_page_token = prop.musiclist.list_items.next_page_token.clone_state();
         let next_page_disabled = next_page_token.is_none();
+
         let onclick_next_page = move |_| {
             page_token.emit(next_page_token.clone());
         };
@@ -43,6 +45,7 @@ pub fn MusiclistView(prop: &MusiclistProperty) -> Html {
         let youtube_player_video_id = prop.youtube_player_video_id.clone();
         let title = item.title.clone_state();
         let video_id = item.video_id.clone_state();
+        
         let onclick_music = move |_| {
             youtube_player_video_id.emit(video_id.clone())
         };

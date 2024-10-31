@@ -1,4 +1,4 @@
-pub mod client_state;
-pub mod musiclist_state;
-pub mod youtube_player_state;
-pub mod lyrics_state;
+pub mod music_client;
+pub mod musiclist;
+pub mod youtube_player;
+pub mod lyrics;

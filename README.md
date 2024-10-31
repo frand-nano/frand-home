@@ -175,7 +175,7 @@ Control:
 __handle_client_message__ 에서는 메시지를 보낸 클라이언트의 __ClientState__ 에 접근할 수 있고 
 해당 클라이언트에 결과 메시지를 보낼 수 있습니다.
 ```rust
-pub async fn handle_client_message<Msg: frand_home_state::StateMessage>(
+pub async fn handle_client_message<Msg: frand_home_node::StateMessage>(
     &self,
     sender: &UnboundedSender<Msg>,
     prop: &mut <ClientState as State>::Property,

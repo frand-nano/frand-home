@@ -1,8 +1,9 @@
-use frand_home_node::NodeState;
+use frand_home_node::node_state;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq, NodeState)]
-pub struct UserState {
+#[node_state]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq)]
+pub struct User {
     pub name: String,
     pub email: String,
     pub picture: String,

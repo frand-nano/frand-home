@@ -1,26 +1,26 @@
-use frand_home_state::{Node, State};
+use frand_home_node::{Node, ValueNode};
 use yew::{function_component, html, Html, Properties};
 
-use crate::state::client::musiclist_state::MusiclistState;
+use crate::state::client::musiclist::Musiclist;
 
 #[derive(Properties, PartialEq)]
 pub struct MusiclistProperty {
-    pub musiclist: <MusiclistState as State>::Property,
-    pub youtube_player_video_id: Node<String>,
+    pub musiclist: Musiclist::Node,
+    pub youtube_player_video_id: ValueNode<String>,
 }
 
 #[function_component]
-pub fn Musiclist(prop: &MusiclistProperty) -> Html {    
+pub fn MusiclistView(prop: &MusiclistProperty) -> Html {    
     let pages = {
         let page_token = prop.musiclist.playlist_page.page_token.clone();
-        let prev_page_token = prop.musiclist.list_items.prev_page_token.value().clone();
+        let prev_page_token = prop.musiclist.list_items.prev_page_token.clone_state();
         let prev_page_disabled = prev_page_token.is_none();
         let onclick_prev_page = move |_| {
             page_token.emit(prev_page_token.clone());
         };
 
         let page_token = prop.musiclist.playlist_page.page_token.clone();
-        let next_page_token = prop.musiclist.list_items.next_page_token.value().clone();
+        let next_page_token = prop.musiclist.list_items.next_page_token.clone_state();
         let next_page_disabled = next_page_token.is_none();
         let onclick_next_page = move |_| {
             page_token.emit(next_page_token.clone());
@@ -38,11 +38,11 @@ pub fn Musiclist(prop: &MusiclistProperty) -> Html {
         }
     };
 
-    let items: Vec<_> = prop.musiclist.list_items.items.items().clone().into_iter()
+    let items: Vec<_> = prop.musiclist.list_items.items.iter()
     .map(|item| {
         let youtube_player_video_id = prop.youtube_player_video_id.clone();
-        let title = item.title.clone();
-        let video_id = item.video_id.clone();
+        let title = item.title.clone_state();
+        let video_id = item.video_id.clone_state();
         let onclick_music = move |_| {
             youtube_player_video_id.emit(video_id.clone())
         };

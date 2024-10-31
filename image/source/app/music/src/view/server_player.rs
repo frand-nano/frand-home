@@ -6,7 +6,7 @@ pub struct ServerPlayerProperty {
 }
 
 #[function_component]
-pub fn ServerPlayer(_prop: &ServerPlayerProperty) -> Html {
+pub fn ServerPlayerView(_prop: &ServerPlayerProperty) -> Html {
     html! {
         <div>
 

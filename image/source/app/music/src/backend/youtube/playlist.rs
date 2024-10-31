@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend::component::Music, state::server::playlist_state::{PlaylistItemState, PlaylistItemsState}};
+use crate::{backend::component::Music, state::server::playlist};
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -26,7 +26,7 @@ impl Playlist {
         .send().await
         .map_err(|err| anyhow!("{err}"))?;
 
-        if response.status().is_success() {
+        let result = if response.status().is_success() {
             response.json::<Self>().await
             .map_err(|err| err.into())
         } else {
@@ -38,11 +38,13 @@ impl Playlist {
                 response.json::<serde_json::Value>().await?,
             );
             Err(anyhow!("response.status(): {}", response.status()))
-        }
+        };
+
+        result
     }
 }
 
-impl From<Playlist> for PlaylistItemsState {
+impl From<Playlist> for playlist::PlaylistItems::State {
     fn from(value: Playlist) -> Self {
         Self { 
             items: value.items.into_iter().map(|item| item.into()).collect(), 
@@ -57,7 +59,7 @@ pub struct PlaylistItem {
     pub snippet: PlaylistItemSnippet,
 }
 
-impl From<PlaylistItem> for PlaylistItemState {
+impl From<PlaylistItem> for playlist::PlaylistItem::State {
     fn from(value: PlaylistItem) -> Self {
         Self {
             playlist_id: value.id,

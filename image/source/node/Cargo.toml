@@ -1,5 +1,5 @@
 [package]
-name = "frand-home-state"
+name = "frand-home-node"
 
 [package.version]
 workspace = true

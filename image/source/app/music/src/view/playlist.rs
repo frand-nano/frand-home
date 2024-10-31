@@ -1,48 +1,45 @@
-use frand_home_state::{Node, State};
+use frand_home_node::{Node, ValueNode};
 use yew::{function_component, html, Html, Properties};
 
-use crate::state::server::playlist_state::PlaylistItemsState;
+use crate::state::server::playlist::PlaylistItems;
 
 #[derive(Properties, PartialEq)]
 pub struct PlaylistProperty {
-    pub visible: Node<bool>,
-    pub list_items: <PlaylistItemsState as State>::Property,
-    pub musiclist_playlist_id: Node<String>,
+    pub visible: ValueNode<bool>,
+    pub list_items: PlaylistItems::Node,
+    pub musiclist_playlist_id: ValueNode<String>,
 }
 
 #[function_component]
-pub fn Playlist(prop: &PlaylistProperty) -> Html {
+pub fn PlaylistView(prop: &PlaylistProperty) -> Html {
     let visible = prop.visible.clone();
     let visible_value = *visible.value();
     let onclick_visible = move |_| {
         visible.emit(!visible_value)
     };
 
-    let callback_item = prop.list_items.items.callback_item();
-    let items: Vec<_> = prop.list_items.items.items().clone().into_iter()
+    let items: Vec<_> = prop.list_items.items.iter()
     .enumerate()
-    .map(|(index, item)| {
+    .map(|(_, item)| {
         let musiclist_playlist_id = prop.musiclist_playlist_id.clone();
-        let title = item.title.clone();
-        let playlist_id = item.playlist_id.clone();
+        let title = item.title.clone_state();
+        let playlist_id = item.playlist_id.clone_state();
         let onclick_playlist = move |_| {
             musiclist_playlist_id.emit(playlist_id.clone())
         };
 
-        let item_refresh = item.refresh;
-        let callback_item = callback_item.clone();
+        let item_refresh = item.refresh.clone();
+        let item_refresh_value = *item_refresh.value();
         let onclick_item_refresh = move |_| {
-            let mut item = item.clone();
-            item.refresh = true;
-            callback_item.emit((index, item));
+            item_refresh.emit(true);
         };
 
         html! {
             <div>   
-                <button disabled={item_refresh} onclick={onclick_item_refresh}> 
+                <button disabled={item_refresh_value} onclick={onclick_item_refresh}> 
                 {"🔄"}
                 </button>
-                <button disabled={item_refresh} onclick={onclick_playlist}>
+                <button disabled={item_refresh_value} onclick={onclick_playlist}>
                 {title}
                 </button>
             </div>

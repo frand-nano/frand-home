@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend::component::Music, state::{client::musiclist_state::{MusiclistItemState, MusiclistItemsState}, server::playlist_state::PlaylistPageState}};
+use crate::{backend::component::Music, state::{client::musiclist::{MusiclistItem, MusiclistItems}, server::playlist::PlaylistPage}};
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -9,13 +9,13 @@ pub struct PlaylistItems {
     pub next_page_token: Option<String>,
     pub prev_page_token: Option<String>,
     pub page_info: PlaylistItemsPageInfo,
-    pub items: Vec<PlaylistItem>,    
+    pub items: Vec<PlaylistItemsItem>,    
 }
 
 impl PlaylistItems {
     pub async fn youtube_get(
         music: &Music,
-        playlist_page: &PlaylistPageState,
+        playlist_page: &PlaylistPage::State,
     ) -> anyhow::Result<Self> {
         let params = [
             ("part", "snippet"),
@@ -46,7 +46,7 @@ impl PlaylistItems {
     }
 }
 
-impl From<PlaylistItems> for MusiclistItemsState {
+impl From<PlaylistItems> for MusiclistItems::State {
     fn from(value: PlaylistItems) -> Self {
         Self { 
             next_page_token: value.next_page_token, 
@@ -67,12 +67,12 @@ pub struct PlaylistItemsPageInfo {
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct PlaylistItem {
-    pub snippet: PlaylistItemSnippet,
+pub struct PlaylistItemsItem {
+    pub snippet: PlaylistItemsItemSnippet,
 }
 
-impl From<PlaylistItem> for MusiclistItemState {
-    fn from(value: PlaylistItem) -> Self {
+impl From<PlaylistItemsItem> for MusiclistItem::State {
+    fn from(value: PlaylistItemsItem) -> Self {
         Self {
             video_id: value.snippet.resource_id.video_id,
             title: value.snippet.title,
@@ -82,13 +82,13 @@ impl From<PlaylistItem> for MusiclistItemState {
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct PlaylistItemSnippet {
+pub struct PlaylistItemsItemSnippet {
     pub title: String,
-    pub resource_id: PlaylistItemSnippetResourceId,
+    pub resource_id: PlaylistItemsItemSnippetResourceId,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct PlaylistItemSnippetResourceId {
+pub struct PlaylistItemsItemSnippetResourceId {
     pub video_id: String,
 }

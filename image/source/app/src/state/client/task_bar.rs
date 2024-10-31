@@ -1,7 +1,8 @@
-use frand_home_state::PropertyState;
+use frand_home_node::node_state;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq, PropertyState)]
-pub struct TaskBarState {
+#[node_state]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq)]
+pub struct TaskBar {
     pub playlist_visible: bool,
 }

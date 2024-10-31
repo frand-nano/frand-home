@@ -1,15 +1,15 @@
 use yew::{function_component, html, Html, Properties};
 
-use crate::state::client::{task_bar::TaskBarStateProperty, user_state::UserStateProperty};
+use crate::state::client::{task_bar::TaskBar, user::User};
 
 #[derive(Properties, PartialEq)]
 pub struct TaskBarProperty {
-    pub user: UserStateProperty,
-    pub task_bar: TaskBarStateProperty,
+    pub user: User::Node,
+    pub task_bar: TaskBar::Node,
 }
 
 #[function_component]
-pub fn TaskBar(prop: &TaskBarProperty) -> Html {
+pub fn TaskBarView(prop: &TaskBarProperty) -> Html {
     let user = prop.user.clone();
 
     let user = if *user.authenticated.value() {

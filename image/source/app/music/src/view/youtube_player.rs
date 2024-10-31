@@ -1,13 +1,13 @@
-use frand_home_state::Node;
+use frand_home_node::ValueNode;
 use yew::{function_component, html, Html, Properties};
 
 #[derive(Properties, PartialEq)]
 pub struct YoutubePlayerProperty {
-    pub video_id: Node<String>,
+    pub video_id: ValueNode<String>,
 }
 
 #[function_component]
-pub fn YoutubePlayer(prop: &YoutubePlayerProperty) -> Html {
+pub fn YoutubePlayerView(prop: &YoutubePlayerProperty) -> Html {
     let video_id = prop.video_id.value();
 
     html! {

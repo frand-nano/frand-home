@@ -5,8 +5,8 @@ mod view;
 
 pub use self::{
     state::{
-        client::client_state::ClientState,
-        server::server_state::ServerState,
+        client::client::Client,
+        server::server::Server,
     },
     view::view,
 };

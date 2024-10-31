@@ -9,7 +9,7 @@ workspace = true
 workspace = true
 
 [dependencies]
-frand-home-state = { path = "../../state" }
+frand-home-node = { path = "../../node" }
 lazy_static = "1.4.0"
 serde = "1"
 serde_json = "1.0.91"

@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use frand_home_app::state::client::user_state::UserState;
+use frand_home_app::state::client::user;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, Hash)]
@@ -51,9 +51,9 @@ impl PartialEq for User {
     }
 }
 
-impl From<User> for UserState {
+impl From<User> for user::User::State {
     fn from(value: User) -> Self {
-        UserState { 
+        user::User::State { 
             authenticated: value.authenticated(),
             name: value.name,
             email: value.email,

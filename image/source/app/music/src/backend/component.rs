@@ -1,18 +1,17 @@
 use std::collections::HashMap;
 
-use awc::Client;
-use frand_home_state::{State, StateProperty, VecMessage};
+use frand_home_node::{Node, RootMessage, VecMessage};
 use mysql::Pool;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
-use crate::state::{client::{client_state::{ClientState, ClientStateMessage}, musiclist_state::MusiclistStateMessage}, server::{playlist_state::{PlaylistItemsStateMessage, PlaylistState, PlaylistStateMessage}, server_state::{ServerState, ServerStateMessage}}};
+use crate::state::{client::{music_client::MusicClient, musiclist::Musiclist}, server::{playlist::{PlaylistItem, PlaylistItems, Playlist}, music_server::MusicServer}};
 
-use super::{config::Config, database::init_database, youtube::{playlist::Playlist, playlist_items::PlaylistItems}};
+use super::{config::Config, database::init_database, youtube};
 
 pub struct Music {
     pub config: &'static Config,
-    pub client: Client,
+    pub client: awc::Client,
     pub pool: Pool,
 }
 
@@ -23,25 +22,25 @@ impl Music {
     ) -> anyhow::Result<Self> {
         Ok(Self {
             config,
-            client: Client::default(),
+            client: awc::Client::default(),
             pool: init_database(mysql_url)?,
         })
     }
 
     pub async fn new_server_state(
         &self,
-    ) -> anyhow::Result<ServerState> {
-        Ok(ServerState {
-            playlist: PlaylistState {
-                list_items: Playlist::youtube_get(self).await?.into(), 
+    ) -> anyhow::Result<MusicServer::State> {
+        Ok(MusicServer::State {
+            playlist: Playlist::State {
+                list_items: youtube::Playlist::youtube_get(self).await?.into(), 
             },
         })
     }
 
     pub async fn new_client_state(
         &self,
-    ) -> anyhow::Result<ClientState> {              
-        Ok(ClientState {
+    ) -> anyhow::Result<MusicClient::State> {              
+        Ok(MusicClient::State {
             playlist_visible: true,
             musiclist: Default::default(),
             youtube_player: Default::default(),
@@ -49,27 +48,25 @@ impl Music {
         })
     }
 
-    pub async fn handle_server_message<Msg: frand_home_state::StateMessage>(
+    pub async fn handle_server_message<Msg: RootMessage>(
         &self,
         senders: &HashMap<Uuid, UnboundedSender<Msg>>,
-        prop: &mut <ServerState as State>::Property,
-        message: <ServerState as State>::Message,
+        prop: &mut MusicServer::Node,
+        message: MusicServer::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
-            ServerStateMessage::Playlist(
-                PlaylistStateMessage::ListItems(
-                    PlaylistItemsStateMessage::Items(
+            MusicServer::Message::Playlist(
+                Playlist::Message::ListItems(
+                    PlaylistItems::Message::Items(
                         VecMessage::Item(
-                            (index, mut item)
+                            (index, PlaylistItem::Message::Refresh(refresh))
                         )
                     )
                 )
             ) => {
-                if item.refresh {
-                    item.refresh = false;
-                    let message: Msg = prop.playlist.list_items.items.apply_item_export(
-                        index, item,
-                    );          
+                if refresh {
+                    let refresh = &mut prop.playlist.list_items.items.item_mut(index).refresh;
+                    let message: Msg = refresh.apply_export(false);
                                 
                     for sender in senders.values() {
                         sender.send(message.clone())?;
@@ -80,22 +77,22 @@ impl Music {
         })
     }
     
-    pub async fn handle_client_message<Msg: frand_home_state::StateMessage>(
+    pub async fn handle_client_message<Msg: RootMessage>(
         &self,
         sender: &UnboundedSender<Msg>,
-        prop: &mut <ClientState as State>::Property,
-        message: <ClientState as State>::Message,
+        prop: &mut MusicClient::Node,
+        message: MusicClient::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
-            ClientStateMessage::Musiclist(
-                MusiclistStateMessage::PlaylistPage(_)        
+            MusicClient::Message::Musiclist(
+                Musiclist::Message::PlaylistPage(_)        
             ) => {
-                let playlist_items = PlaylistItems::youtube_get(
+                let playlist_items = youtube::PlaylistItems::youtube_get(
                     self,
                     &prop.musiclist.playlist_page.clone_state(),
                 ).await?;
     
-                let message = prop.musiclist.list_items.apply_export(
+                let message: Msg = prop.musiclist.list_items.apply_export(
                     playlist_items.into(),
                 );          
                                 

@@ -3,11 +3,5 @@ pub mod backend;
 pub mod state;
 mod view;
 
-pub use self::{
-    state::{
-        client::client_state::ClientState,
-        server::server_state::ServerState,
-    },
-    view::view,
-};
+pub use self::view::view;
 

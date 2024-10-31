@@ -1,7 +1,7 @@
-use frand_home_state::PropertyState;
+use frand_home_node::NodeState;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, NodeState)]
 pub struct YoutubePlayerState {
     pub video_id: String,
 }

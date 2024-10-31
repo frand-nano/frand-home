@@ -26,7 +26,7 @@ impl Playlist {
         .send().await
         .map_err(|err| anyhow!("{err}"))?;
 
-        if response.status().is_success() {
+        let result = if response.status().is_success() {
             response.json::<Self>().await
             .map_err(|err| err.into())
         } else {
@@ -38,7 +38,9 @@ impl Playlist {
                 response.json::<serde_json::Value>().await?,
             );
             Err(anyhow!("response.status(): {}", response.status()))
-        }
+        };
+
+        result
     }
 }
 

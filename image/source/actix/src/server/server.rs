@@ -1,7 +1,7 @@
 use std::collections::HashMap;
-use frand_home_app::{backend::component::App, state::{client::client_state::ClientStateProperty, socket_state::{SocketStateMessage, SocketStateProperty}}};
+use frand_home_app::{backend::component::App, state::{client::client_state::ClientStateNode, socket_state::{SocketStateMessage, SocketStateNode}}};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
-use frand_home_state::StateProperty;
+use frand_home_node::StateNode;
 use uuid::Uuid;
 
 use crate::{authorize::user::User, APP_CONFIG, CONFIG};
@@ -11,8 +11,8 @@ pub struct Server {
     pub receiver: UnboundedReceiver<ServerMessage>,
     pub users: HashMap<Uuid, User>,
     pub senders: HashMap<Uuid, UnboundedSender<SocketStateMessage>>,
-    pub socket_prop: SocketStateProperty,
-    pub client_props: HashMap<Uuid, ClientStateProperty>,
+    pub socket_prop: SocketStateNode,
+    pub client_props: HashMap<Uuid, ClientStateNode>,
 }
 
 #[derive(Debug, Clone)]
@@ -43,7 +43,7 @@ impl Server {
 
         let app = App::new(&APP_CONFIG, &mysql_url)?;
 
-        let mut socket_prop = SocketStateProperty::default();
+        let mut socket_prop = SocketStateNode::default();
         socket_prop.server.apply_state(app.new_server_state().await?);
         socket_prop.client.apply_state(app.new_client_state().await?);
 

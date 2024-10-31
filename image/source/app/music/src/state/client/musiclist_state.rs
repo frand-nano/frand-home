@@ -1,15 +1,15 @@
-use frand_home_state::PropertyState;
+use frand_home_node::NodeState;
 use serde::{Deserialize, Serialize};
 
 use crate::state::server::playlist_state::PlaylistPageState;
 
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, NodeState)]
 pub struct MusiclistState {
     pub playlist_page: PlaylistPageState,
     pub list_items: MusiclistItemsState,
 }
 
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, NodeState)]
 pub struct MusiclistItemsState {
     pub next_page_token: Option<String>,
     pub prev_page_token: Option<String>,
@@ -18,7 +18,7 @@ pub struct MusiclistItemsState {
     pub items: Vec<MusiclistItemState>,    
 }
 
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, PropertyState)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, NodeState)]
 pub struct MusiclistItemState {
     pub video_id: String,
     pub title: String,

@@ -1,11 +1,11 @@
 use yew::{function_component, html, Html, Properties};
 
-use crate::state::client::{task_bar::TaskBarStateProperty, user_state::UserStateProperty};
+use crate::state::client::{task_bar::TaskBarStateNode, user_state::UserStateNode};
 
 #[derive(Properties, PartialEq)]
 pub struct TaskBarProperty {
-    pub user: UserStateProperty,
-    pub task_bar: TaskBarStateProperty,
+    pub user: UserStateNode,
+    pub task_bar: TaskBarStateNode,
 }
 
 #[function_component]

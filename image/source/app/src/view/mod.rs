@@ -1,4 +1,4 @@
-use frand_home_state::State;
+use frand_home_node::Item;
 use task_bar::TaskBar;
 use yew::{html, Html};
 
@@ -7,8 +7,8 @@ use crate::state::{client::client_state::ClientState, server::server_state::Serv
 pub mod task_bar;
 
 pub fn view(
-    server_prop: &<ServerState as State>::Property,
-    client_prop: &<ClientState as State>::Property,
+    server_prop: &<ServerState as Item>::Node,
+    client_prop: &<ClientState as Item>::Node,
 ) -> Html {
     html! {
         <div>

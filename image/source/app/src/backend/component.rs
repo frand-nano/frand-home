@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use frand_home_music::backend::component::Music;
-use frand_home_state::{State, StateComponent};
+use frand_home_node::{Item, Message, Node};
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
@@ -12,11 +12,6 @@ use super::config::Config;
 pub struct App {
     pub config: &'static Config,
     pub music: Music,
-}
-
-impl StateComponent for App {        
-    type ServerState = ServerState;
-    type ClientState = ClientState;    
 }
 
 impl App {
@@ -48,11 +43,11 @@ impl App {
         })
     }
 
-    pub async fn handle_server_message<Msg: frand_home_state::StateMessage>(
+    pub async fn handle_server_message<Msg: Message>(
         &self,
         senders: &HashMap<Uuid, UnboundedSender<Msg>>,
-        prop: &mut <ServerState as State>::Property,
-        message: <ServerState as State>::Message,
+        prop: &mut <ServerState as Item>::Node,
+        message: <<ServerState as Item>::Node as Node>::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
             ServerStateMessage::Music(message) => {
@@ -62,11 +57,11 @@ impl App {
         })
     }
     
-    pub async fn handle_client_message<Msg: frand_home_state::StateMessage>(
+    pub async fn handle_client_message<Msg: Message>(
         &self,
         sender: &UnboundedSender<Msg>,
-        prop: &mut <ClientState as State>::Property,
-        message: <ClientState as State>::Message,
+        prop: &mut <ClientState as Item>::Node,
+        message:  <<ClientState as Item>::Node as Node>::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
             ClientStateMessage::Music(message) => {

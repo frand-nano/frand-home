@@ -1,4 +1,4 @@
-use frand_home_state::State;
+use frand_home_node::Item;
 use lyrics::Lyrics;
 use music_queue::MusicQueue;
 use musiclist::Musiclist;
@@ -17,8 +17,8 @@ pub mod server_player;
 pub mod music_queue;
 
 pub fn view(
-    server_prop: &<ServerState as State>::Property,
-    client_prop: &<ClientState as State>::Property,
+    server_prop: &<ServerState as Item>::Node,
+    client_prop: &<ClientState as Item>::Node,
 ) -> Html {
     html! {
         <div style="display:flex; flex-direction: row;">

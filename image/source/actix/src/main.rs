@@ -33,16 +33,10 @@ async fn main() -> anyhow::Result<()> {
 
     log::info!("🚀 start server");
 
-    let tls_server_config = CONFIG.read_tls_server_config()?;   
     let session_secret = CONFIG.session_secret()?;   
      
     let (server, message_sender) = Server::new().await?;
     let server_handle = spawn(server.run());
-
-    let ip = match CONFIG.settings.local_mode {
-        true => "127.0.0.1",
-        false => "0.0.0.0",
-    };
 
     let http_server = HttpServer::new(move || {
         App::new()

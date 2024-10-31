@@ -1,9 +1,9 @@
-use frand_home_state::PropertyStateRoot;
+use frand_home_node::NodeStateRoot;
 use serde::{Deserialize, Serialize};
 
 use super::{client::client_state::ClientState, server::server_state::ServerState};
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq, PropertyStateRoot)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq, NodeStateRoot)]
 pub struct SocketState {
     pub server: ServerState,
     pub client: ClientState,

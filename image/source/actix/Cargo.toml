@@ -9,7 +9,7 @@ workspace = true
 workspace = true
 
 [dependencies]
-frand-home-state = { path = "../state" }
+frand-home-node = { path = "../node" }
 frand-home-app = { path = "../app" }
 actix = "0.13.0"
 actix-http = "3.6.0"

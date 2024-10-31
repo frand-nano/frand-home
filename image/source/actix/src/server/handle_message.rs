@@ -1,6 +1,6 @@
 use anyhow::bail;
 use frand_home_app::state::socket_state::SocketStateMessage;
-use frand_home_state::StateProperty;
+use frand_home_node::StateNode;
 
 use super::{Server, ServerMessage};
 
@@ -23,7 +23,7 @@ impl Server {
                             serde_json::to_string_pretty(&message).unwrap_or_default(),
                         );      
 
-                        self.socket_prop.server.apply_message(message.clone());
+                        self.socket_prop.server.apply(message.clone());
                         for sender in self.senders.values() {
                             sender.send(SocketStateMessage::Server(message.clone()))?;
                         }
@@ -46,7 +46,7 @@ impl Server {
                             serde_json::to_string_pretty(&message).unwrap_or_default(),
                         );    
 
-                        client_prop.apply_message(message.clone());
+                        client_prop.apply(message.clone());
                         sender.send(SocketStateMessage::Client(message.clone()))?; 
 
                         self.app.handle_client_message(
@@ -69,7 +69,7 @@ impl Server {
                             self.senders.insert(id, sender.clone());      
     
                             let mut socket_state = self.socket_prop.clone_state();
-                            socket_state.client.user = user.into();
+                            socket_state.client.user = user.clone().into();
 
                             let mut client_prop = self.socket_prop.client.clone();
                             client_prop.apply_state(socket_state.client.clone());

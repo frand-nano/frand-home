@@ -1,5 +1,5 @@
-use frand_home_app::state::socket_state::{SocketStateMessage, SocketStateProperty};
-use frand_home_state::StateProperty;
+use frand_home_app::state::socket_state::{SocketStateMessage, SocketStateNode};
+use frand_home_node::Node;
 use yew::{Component, Context, Html};
 
 use crate::socket::client_socket::ClientSocket;
@@ -16,9 +16,10 @@ impl App {
         Self {
             socket: ClientSocket::new(context),
             prop: AppProperty {
-                socket: <SocketStateProperty as StateProperty>::new::<App, SocketStateMessage>(
+                socket: <SocketStateNode as Node>::new::<App, SocketStateMessage>(
                     vec![], 
-                    context,
+                    None,
+                    Some(context),
                 )
             },
         }        

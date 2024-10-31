@@ -1,10 +1,10 @@
-use frand_home_app::state::socket_state::{SocketStateMessage, SocketStateProperty};
+use frand_home_app::state::socket_state::{SocketStateMessage, SocketStateNode};
 use serde::{Deserialize, Serialize};
 use yew::Properties;
 
 #[derive(Default, Clone, PartialEq, Properties)]
 pub struct AppProperty {
-    pub socket: SocketStateProperty,
+    pub socket: SocketStateNode,
 }
 
 #[derive(Serialize, Deserialize, Clone)]

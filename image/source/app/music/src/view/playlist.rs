@@ -1,17 +1,17 @@
-use frand_home_node::{Item, StateNode, ValueNode};
+use frand_home_node::{Node, ValueNode};
 use yew::{function_component, html, Html, Properties};
 
-use crate::state::server::playlist_state::PlaylistItemsState;
+use crate::state::server::playlist::PlaylistItems;
 
 #[derive(Properties, PartialEq)]
 pub struct PlaylistProperty {
     pub visible: ValueNode<bool>,
-    pub list_items: <PlaylistItemsState as Item>::Node,
+    pub list_items: PlaylistItems::Node,
     pub musiclist_playlist_id: ValueNode<String>,
 }
 
 #[function_component]
-pub fn Playlist(prop: &PlaylistProperty) -> Html {
+pub fn PlaylistView(prop: &PlaylistProperty) -> Html {
     let visible = prop.visible.clone();
     let visible_value = *visible.value();
     let onclick_visible = move |_| {

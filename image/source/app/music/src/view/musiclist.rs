@@ -1,16 +1,16 @@
-use frand_home_node::{Item, StateNode, ValueNode};
+use frand_home_node::{Node, ValueNode};
 use yew::{function_component, html, Html, Properties};
 
-use crate::state::client::musiclist_state::MusiclistState;
+use crate::state::client::musiclist::Musiclist;
 
 #[derive(Properties, PartialEq)]
 pub struct MusiclistProperty {
-    pub musiclist: <MusiclistState as Item>::Node,
+    pub musiclist: Musiclist::Node,
     pub youtube_player_video_id: ValueNode<String>,
 }
 
 #[function_component]
-pub fn Musiclist(prop: &MusiclistProperty) -> Html {    
+pub fn MusiclistView(prop: &MusiclistProperty) -> Html {    
     let pages = {
         let page_token = prop.musiclist.playlist_page.page_token.clone();
         let prev_page_token = prop.musiclist.list_items.prev_page_token.clone_state();

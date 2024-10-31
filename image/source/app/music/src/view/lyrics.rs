@@ -6,7 +6,7 @@ pub struct LyricsProperty {
 }
 
 #[function_component]
-pub fn Lyrics(_prop: &LyricsProperty) -> Html {
+pub fn LyricsView(_prop: &LyricsProperty) -> Html {
     html! {
         <div>
 

@@ -1,7 +1,7 @@
 use actix_session::SessionExt;
 use actix_web::{get, web::{Data, Payload}, HttpRequest, HttpResponse};
 use actix_ws::{handle, Message, MessageStream, Session};
-use frand_home_app::state::socket_state::SocketStateMessage;
+use frand_home_app::state::app::App;
 use futures_util::StreamExt;
 use tokio::{sync::mpsc::{unbounded_channel, UnboundedSender}, task::spawn_local};
 use crate::{authorize::user::User, server::{ServerHandle, ServerMessage}, session::SessionUtil};
@@ -62,7 +62,7 @@ async fn spawn_message_loop(
         while let Some(message) = stream.next().await { 
             match message {
                 Ok(Message::Text(json)) => {
-                    match SocketStateMessage::try_from(&json) {
+                    match App::Message::try_from(&json) {
                         Ok(message) => {
                             if let Err(err) = server_handle.send(message) {
                                 log::error!("❗ {user_clone} 🔗 Send Message err: {err}");

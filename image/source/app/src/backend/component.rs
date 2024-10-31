@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
 use frand_home_music::backend::component::Music;
-use frand_home_node::{Item, Message, Node};
+use frand_home_node::RootMessage;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
-use crate::state::{client::client_state::{ClientState, ClientStateMessage}, server::server_state::{ServerState, ServerStateMessage}};
+use crate::state::{client::client::Client, server::server::Server};
 
 use super::config::Config;
 
-pub struct App {
+pub struct ActixApp {
     pub config: &'static Config,
     pub music: Music,
 }
 
-impl App {
+impl ActixApp {
     pub fn new(
         config: &'static Config,
         mysql_url: &str,
@@ -27,44 +27,44 @@ impl App {
 
     pub async fn new_server_state(
         &self,
-    ) -> anyhow::Result<ServerState> {
-        Ok(ServerState {
+    ) -> anyhow::Result<Server::State> {
+        Ok(Server::State {
             music: Music::new_server_state(&self.music).await?,
         })
     }
 
     pub async fn new_client_state(
         &self,
-    ) -> anyhow::Result<ClientState> {       
-        Ok(ClientState {
+    ) -> anyhow::Result<Client::State> {       
+        Ok(Client::State {
             user: Default::default(),
             task_bar: Default::default(),
             music: Music::new_client_state(&self.music).await?,
         })
     }
 
-    pub async fn handle_server_message<Msg: Message>(
+    pub async fn handle_server_message<Msg: RootMessage>(
         &self,
         senders: &HashMap<Uuid, UnboundedSender<Msg>>,
-        prop: &mut <ServerState as Item>::Node,
-        message: <<ServerState as Item>::Node as Node>::Message,
+        prop: &mut Server::Node,
+        message: Server::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
-            ServerStateMessage::Music(message) => {
+            Server::Message::Music(message) => {
                 Music::handle_server_message(&self.music, senders, &mut prop.music, message).await?
             },
             _ => {},
         })
     }
     
-    pub async fn handle_client_message<Msg: Message>(
+    pub async fn handle_client_message<Msg: RootMessage>(
         &self,
         sender: &UnboundedSender<Msg>,
-        prop: &mut <ClientState as Item>::Node,
-        message:  <<ClientState as Item>::Node as Node>::Message,
+        prop: &mut Client::Node,
+        message: Client::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
-            ClientStateMessage::Music(message) => {
+            Client::Message::Music(message) => {
                 Music::handle_client_message(&self.music, sender, &mut prop.music, message).await?
             },
             _ => {},

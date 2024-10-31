@@ -1,18 +1,17 @@
-use frand_home_node::Item;
-use task_bar::TaskBar;
+use task_bar::TaskBarView;
 use yew::{html, Html};
 
-use crate::state::{client::client_state::ClientState, server::server_state::ServerState};
+use crate::state::{client::client::Client, server::server::Server};
 
 pub mod task_bar;
 
 pub fn view(
-    server_prop: &<ServerState as Item>::Node,
-    client_prop: &<ClientState as Item>::Node,
+    server_prop: &Server::Node,
+    client_prop: &Client::Node,
 ) -> Html {
     html! {
         <div>
-            <TaskBar
+            <TaskBarView
                 user = { client_prop.user.clone() }
                 task_bar = { client_prop.task_bar.clone() }
             />     

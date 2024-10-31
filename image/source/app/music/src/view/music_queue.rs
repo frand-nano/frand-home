@@ -6,7 +6,7 @@ pub struct MusicQueueProperty {
 }
 
 #[function_component]
-pub fn MusicQueue(_prop: &MusicQueueProperty) -> Html {
+pub fn MusicQueueView(_prop: &MusicQueueProperty) -> Html {
     html! {
         <div>
 

@@ -1,3 +1,3 @@
-pub mod socket_state;
+pub mod app;
 pub mod server;
 pub mod client;

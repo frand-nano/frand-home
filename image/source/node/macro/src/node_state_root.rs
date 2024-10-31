@@ -1,24 +1,22 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use syn::Ident;
 use quote::quote;
 
 pub fn node_state_root(
-    state_name: &Ident, 
+    state_name: &Ident,
 ) -> TokenStream {
-    let node_name = {
-        let node_name = format!("{state_name}Node");
-        Ident::new(&node_name, state_name.span())
-    };
-    let message_name = {
-        let message_name = format!("{state_name}Message");
-        Ident::new(&message_name, state_name.span())
-    };
-
+    let node_name = Ident::new("Node", Span::mixed_site());
+    let message_name = Ident::new("Message", Span::mixed_site());
+    
     quote! {
         impl Default for #node_name {
             fn default() -> Self {
-                <Self as frand_home_node::Node>::new_default(vec![], None)
+                <Self as frand_home_node::Node<#state_name>>::new_default(vec![], None)
             }
+        }
+
+        impl frand_home_node::RootMessage for #message_name {
+            fn error(err: String) -> Self { Self::Error(err) }
         }
 
         impl TryFrom<#message_name> for String {
@@ -43,7 +41,7 @@ pub fn node_state_root(
                     Ok(value) => {
                         match serde_json::from_str(&value) {
                             Ok(result) => result,
-                            Err(err) => <Self as frand_home_node::Message>::error(
+                            Err(err) => <Self as frand_home_node::RootMessage>::error(
                                 format!(
                                     "❗ {}::from(anyhow::Result<String>) err: {}, value: {}", 
                                     stringify!(#message_name),
@@ -53,7 +51,7 @@ pub fn node_state_root(
                             ),
                         }
                     },
-                    Err(_) => <Self as frand_home_node::Message>::error(
+                    Err(_) => <Self as frand_home_node::RootMessage>::error(
                         format!(
                             "❗ {}::from(anyhow::Result<String>) value: Err", 
                             stringify!(#message_name),
@@ -69,7 +67,7 @@ pub fn node_state_root(
                     Ok(value) => {
                         match serde_json::from_slice(&value) {
                             Ok(result) => result,
-                            Err(err) => <Self as frand_home_node::Message>::error(
+                            Err(err) => <Self as frand_home_node::RootMessage>::error(
                                 format!(
                                     "❗ {}::from(anyhow::Result<Vec<u8>>) err: {}", 
                                     stringify!(#message_name),
@@ -78,7 +76,7 @@ pub fn node_state_root(
                             ),
                         }
                     },
-                    Err(_) => <Self as frand_home_node::Message>::error(
+                    Err(_) => <Self as frand_home_node::RootMessage>::error(
                         format!(
                             "❗ {}::from(anyhow::Result<Vec<u8>>) value: Err", 
                             stringify!(#message_name),

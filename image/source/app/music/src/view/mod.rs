@@ -1,13 +1,12 @@
-use frand_home_node::Item;
-use lyrics::Lyrics;
-use music_queue::MusicQueue;
-use musiclist::Musiclist;
-use playlist::Playlist;
-use server_player::ServerPlayer;
+use lyrics::LyricsView;
+use music_queue::MusicQueueView;
+use musiclist::MusiclistView;
+use playlist::PlaylistView;
+use server_player::ServerPlayerView;
 use yew::{html, Html};
-use youtube_player::YoutubePlayer;
+use youtube_player::YoutubePlayerView;
 
-use crate::state::{client::client_state::ClientState, server::server_state::ServerState};
+use crate::state::{client::music_client::MusicClient, server::music_server::MusicServer};
 
 pub mod playlist;
 pub mod musiclist;
@@ -17,26 +16,26 @@ pub mod server_player;
 pub mod music_queue;
 
 pub fn view(
-    server_prop: &<ServerState as Item>::Node,
-    client_prop: &<ClientState as Item>::Node,
+    server_prop: &MusicServer::Node,
+    client_prop: &MusicClient::Node,
 ) -> Html {
     html! {
         <div style="display:flex; flex-direction: row;">
-            <Playlist 
+            <PlaylistView 
                 visible = { client_prop.playlist_visible.clone() }
                 list_items = { server_prop.playlist.list_items.clone() }
                 musiclist_playlist_id = { client_prop.musiclist.playlist_page.playlist_id.clone() }
             />
             <div>
-                <YoutubePlayer
+                <YoutubePlayerView
                     video_id = { client_prop.youtube_player.video_id.clone() }
                 />
-                <Lyrics/>
+                <LyricsView/>
             </div>
             <div>
-                <ServerPlayer/>        
-                <MusicQueue/>    
-                <Musiclist
+                <ServerPlayerView/>        
+                <MusicQueueView/>    
+                <MusiclistView
                     musiclist = { client_prop.musiclist.clone() }
                     youtube_player_video_id = { client_prop.youtube_player.video_id.clone() }
                 />          

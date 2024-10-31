@@ -3,11 +3,11 @@ use std::fmt::Debug;
 use serde::{Deserialize, Serialize};
 use yew::{BaseComponent, Context, Properties};
 
-use crate::base::{ids_pushed, Callback, Item, Message, MessageData, Node, StateNode, ITEM_ID, STATE_ID};
+use crate::base::{ids_pushed, Callback, Message, RootMessage, MessageData, Node, State, ITEM_ID, STATE_ID};
 
 #[derive(Debug, Clone, Properties)]
-pub struct OptionNode<I: Item> 
-    where <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>
+pub struct OptionNode<I: State> 
+    where <I::Node as Node<I>>::Message : Serialize + for<'a> Deserialize<'a>
 {
     ids: Vec<usize>,
     callback: Callback<Option<I>>,
@@ -16,35 +16,34 @@ pub struct OptionNode<I: Item>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum OptionNodeMessage<I: Item> 
-    where <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>
+pub enum OptionNodeMessage<I: State> 
+    where <I::Node as Node<I>>::Message : Serialize + for<'a> Deserialize<'a>
 {
     Error(String),
     State(Option<I>),
-    Item(<I::Node as Node>::Message),
+    Item(<I::Node as Node<I>>::Message),
 }
 
-impl<I: Item> Item for Option<I> 
-    where <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>
+impl<I: State> State for Option<I> 
+    where <I::Node as Node<I>>::Message : Serialize + for<'a> Deserialize<'a>
 {
     type Node = OptionNode<I>;
 }
 
-impl<I: Item> PartialEq for OptionNode<I> 
-    where <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>
+impl<I: State> PartialEq for OptionNode<I> 
+    where <I::Node as Node<I>>::Message : Serialize + for<'a> Deserialize<'a>
 {
     fn eq(&self, other: &Self) -> bool {
         self.state == other.state
     }
 }
 
-impl<I: Item> Node for OptionNode<I> 
-    where <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>
+impl<I: State> Node<Option<I>> for OptionNode<I> 
+    where <I::Node as Node<I>>::Message : Serialize + for<'a> Deserialize<'a>
 {
-    type Item = I;
     type Message = OptionNodeMessage<I>;
     
-    fn new<Comp: BaseComponent, Msg: Message>(
+    fn new<Comp: BaseComponent, Msg: RootMessage>(
         ids: Vec<usize>,
         id: Option<usize>,
         context: Option<&Context<Comp>>,
@@ -54,7 +53,7 @@ impl<I: Item> Node for OptionNode<I>
         Self { 
             ids: ids.clone(),
             callback: Callback::new(ids.clone(), STATE_ID, context),
-            item: <I::Node as Node>::new(ids, Some(ITEM_ID), context),
+            item: <I::Node as Node<I>>::new(ids, Some(ITEM_ID), context),
             state: None,
         }
     }    
@@ -67,7 +66,7 @@ impl<I: Item> Node for OptionNode<I>
         Self { 
             ids: ids.clone(),
             callback: Callback::new_default(ids.clone(), STATE_ID),
-            item: <I::Node as Node>::new_default(ids, Some(ITEM_ID)),
+            item: <I::Node as Node<I>>::new_default(ids, Some(ITEM_ID)),
             state: None,
         }
     }
@@ -80,41 +79,11 @@ impl<I: Item> Node for OptionNode<I>
         if let Some(state) = &mut self.state {
             state.set_id(index, id);
         }
-    }
-}
-
-impl<I: Item> Message for OptionNodeMessage<I> 
-    where <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>
-{
-    fn error(err: String) -> Self { Self::Error(err) }
-    
-    fn try_new(depth: usize, data: MessageData) -> Result<Self, (Vec<usize>, usize)> {
-        match data.ids[depth] {
-            STATE_ID => match data.data.downcast() {
-                Ok(data) => Ok(Self::State(*data)),
-                Err(_) => Err((data.ids, depth)),
-            },
-            ITEM_ID => Ok(Self::Item(<I::Node as Node>::Message::new(depth + 1, data))),
-            _ => Err((data.ids, depth)),
-        }    
-    }
-}
-
-impl<I: Item> From<MessageData> for OptionNodeMessage<I> 
-    where <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>
-{
-    fn from(data: MessageData) -> Self {
-        Self::new(0, data)
-    }
-}
-
-impl<I: Item> StateNode<Option<I>> for OptionNode<I> 
-    where 
-    <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>,
-    I::Node : StateNode<I>
-{
+    } 
     fn callback(&self) -> &Callback<Option<I>> { &self.callback }
-    fn clone_state(&self) -> Option<I> { self.state.as_ref().map(|state| state.clone_state()) }
+    fn clone_state(&self) -> Option<I> { 
+        self.state.as_ref().map(|state| state.clone_state()) 
+    }
     fn apply_state(&mut self, state: Option<I>) { 
         match (&mut self.state, state) {
             (None, Some(state)) => {
@@ -145,8 +114,25 @@ impl<I: Item> StateNode<Option<I>> for OptionNode<I>
     }
 }
 
-impl<I: Item> OptionNode<I> 
-    where <I::Node as Node>::Message : Serialize + for<'a> Deserialize<'a>
+impl<I: State> Message for OptionNodeMessage<I> 
+    where <I::Node as Node<I>>::Message : Serialize + for<'a> Deserialize<'a>
+{
+    fn try_error(err: String) -> anyhow::Result<Self> { Ok(Self::Error(err)) }
+    
+    fn try_new(depth: usize, data: MessageData) -> anyhow::Result<Self> {
+        match data.ids[depth] {
+            STATE_ID => match data.data.downcast() {
+                Ok(data) => Ok(Self::State(*data)),
+                Err(_) => Err(anyhow::anyhow!("ids: {:?}, depth: {}", data.ids, depth)),
+            },
+            ITEM_ID => Ok(Self::Item(<<I::Node as Node<I>>::Message as Message>::try_new(depth + 1, data)?)),
+            _ => Err(anyhow::anyhow!("ids: {:?}, depth: {}", data.ids, depth)),
+        }    
+    }
+}
+
+impl<I: State> OptionNode<I> 
+    where <I::Node as Node<I>>::Message : Serialize + for<'a> Deserialize<'a>
 {
     pub fn item(&self) -> Option<&I::Node> { self.state.as_ref() }
 }

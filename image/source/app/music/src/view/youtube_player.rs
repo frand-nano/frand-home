@@ -7,7 +7,7 @@ pub struct YoutubePlayerProperty {
 }
 
 #[function_component]
-pub fn YoutubePlayer(prop: &YoutubePlayerProperty) -> Html {
+pub fn YoutubePlayerView(prop: &YoutubePlayerProperty) -> Html {
     let video_id = prop.video_id.value();
 
     html! {

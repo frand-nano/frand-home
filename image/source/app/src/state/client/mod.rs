@@ -1,3 +1,3 @@
-pub mod client_state;
+pub mod client;
 pub mod task_bar;
-pub mod user_state;
+pub mod user;

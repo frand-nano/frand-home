@@ -1,2 +1,2 @@
-pub mod server_state;
-pub mod playlist_state;
+pub mod music_server;
+pub mod playlist;

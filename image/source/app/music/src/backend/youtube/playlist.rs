@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend::component::Music, state::server::playlist_state::{PlaylistItemState, PlaylistItemsState}};
+use crate::{backend::component::Music, state::server::playlist};
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -44,7 +44,7 @@ impl Playlist {
     }
 }
 
-impl From<Playlist> for PlaylistItemsState {
+impl From<Playlist> for playlist::PlaylistItems::State {
     fn from(value: Playlist) -> Self {
         Self { 
             items: value.items.into_iter().map(|item| item.into()).collect(), 
@@ -59,7 +59,7 @@ pub struct PlaylistItem {
     pub snippet: PlaylistItemSnippet,
 }
 
-impl From<PlaylistItem> for PlaylistItemState {
+impl From<PlaylistItem> for playlist::PlaylistItem::State {
     fn from(value: PlaylistItem) -> Self {
         Self {
             playlist_id: value.id,

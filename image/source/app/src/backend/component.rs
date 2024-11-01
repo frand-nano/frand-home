@@ -10,8 +10,7 @@ use crate::state::{client::client::Client, server::server::Server};
 use super::config::Config;
 
 pub struct ActixApp {
-    pub config: &'static Config,
-    pub music: Music,
+    music: Music,
 }
 
 impl ActixApp {
@@ -20,7 +19,6 @@ impl ActixApp {
         mysql_url: &str,
     ) -> anyhow::Result<Self> {
         Ok(Self {
-            config,
             music: Music::new(&config.music, mysql_url)?,
         })
     }
@@ -46,12 +44,12 @@ impl ActixApp {
     pub async fn handle_server_message<Msg: RootMessage>(
         &self,
         senders: &HashMap<Uuid, UnboundedSender<Msg>>,
-        prop: &mut Server::Node,
+        server: &mut Server::Node,
         message: Server::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
             Server::Message::Music(message) => {
-                Music::handle_server_message(&self.music, senders, &mut prop.music, message).await?
+                Music::handle_server_message(&self.music, senders, &mut server.music, message).await?
             },
             _ => {},
         })
@@ -60,12 +58,13 @@ impl ActixApp {
     pub async fn handle_client_message<Msg: RootMessage>(
         &self,
         sender: &UnboundedSender<Msg>,
-        prop: &mut Client::Node,
+        server: &Server::Node,
+        client: &mut Client::Node,
         message: Client::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
             Client::Message::Music(message) => {
-                Music::handle_client_message(&self.music, sender, &mut prop.music, message).await?
+                Music::handle_client_message(&self.music, sender, &server.music, &mut client.music, message).await?
             },
             _ => {},
         })

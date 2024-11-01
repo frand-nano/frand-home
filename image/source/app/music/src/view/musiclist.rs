@@ -1,57 +1,51 @@
 use frand_home_node::{Node, ValueNode};
 use yew::{function_component, html, Html, Properties};
 
-use crate::state::client::musiclist::Musiclist;
+use crate::state::{client::musiclist::Musiclist, server::playlist::PlaylistPage};
 
 #[derive(Properties, PartialEq)]
 pub struct MusiclistProperty {
     pub musiclist: Musiclist::Node,
+    pub pages: Vec<PlaylistPage::State>,
     pub youtube_player_video_id: ValueNode<String>,
 }
 
 #[function_component]
 pub fn MusiclistView(prop: &MusiclistProperty) -> Html {    
+    let pages: Vec<_> = prop.pages.clone().into_iter().enumerate()
+    .map(|(index, page)| {
+        let musiclist_page = prop.musiclist.page.clone();            
+        let onclick_page = move |_| {
+            musiclist_page.emit(page.clone())
+        };
+        html! {        
+            <button onclick={onclick_page}>
+            {index}
+            </button>
+        }
+    })
+    .collect();
+
     let pages = {
-        let page_token = prop.musiclist.playlist_page.page_token.clone();
-        let prev_page_token = prop.musiclist.list_items.prev_page_token.clone_state();
-        let prev_page_disabled = prev_page_token.is_none();
-        
-        let onclick_prev_page = move |_| {
-            page_token.emit(prev_page_token.clone());
-        };
-
-        let page_token = prop.musiclist.playlist_page.page_token.clone();
-        let next_page_token = prop.musiclist.list_items.next_page_token.clone_state();
-        let next_page_disabled = next_page_token.is_none();
-
-        let onclick_next_page = move |_| {
-            page_token.emit(next_page_token.clone());
-        };
-
         html! {
             <div>
-                <button disabled={prev_page_disabled} onclick={onclick_prev_page}>
-                {"prev"}
-                </button>
-                <button disabled={next_page_disabled} onclick={onclick_next_page}>
-                {"next"}
-                </button>
+                {pages}
             </div>
         }
     };
 
-    let items: Vec<_> = prop.musiclist.list_items.items.iter()
+    let items: Vec<_> = prop.musiclist.items.iter()
     .map(|item| {
         let youtube_player_video_id = prop.youtube_player_video_id.clone();
-        let title = item.title.clone_state();
-        let video_id = item.video_id.clone_state();
+        let youtube_title = item.youtube_title.clone_state();
+        let music_id = item.music_id.clone_state();
         
         let onclick_music = move |_| {
-            youtube_player_video_id.emit(video_id.clone())
+            youtube_player_video_id.emit(music_id.clone())
         };
         html! {
             <button onclick={onclick_music}>
-            {title}
+            {youtube_title}
             </button>
         }
     }).collect(); 

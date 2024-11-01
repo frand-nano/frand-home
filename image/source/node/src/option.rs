@@ -102,7 +102,7 @@ impl<I: State> Node<Option<I>> for OptionNode<I>
     fn apply(&mut self, message: Self::Message) {
         match message {
             OptionNodeMessage::Error(err) => {
-                log::error!("❗ {}.apply_message: {err}", stringify!(OptionNode));
+                log::error!(" {}.apply_message: {err}", stringify!(OptionNode));
             },
             OptionNodeMessage::State(state) => self.apply_state(state),
             OptionNodeMessage::Item(message) => {

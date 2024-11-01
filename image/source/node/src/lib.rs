@@ -11,3 +11,7 @@ pub use self::{
 };
 
 pub use frand_home_macro::*;
+
+mod frand_home_node {
+    pub use crate::*;
+}

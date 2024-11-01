@@ -31,9 +31,7 @@ pub trait Node<S: State>: 'static + Debug + Clone + PartialEq {
     fn clone_state(&self) -> S;
     fn apply_state(&mut self, state: S);
     fn apply(&mut self, message: Self::Message);
-    fn emit(&self, state: S) { 
-        self.callback().emit(state) 
-    }
+    fn emit(&self, state: S) { self.callback().emit(state) }
     fn apply_export<Msg: RootMessage>(&mut self, state: S) -> Msg { 
         self.apply_state(state.clone());
         Msg::new(0, self.callback().export(state)) 
@@ -82,7 +80,8 @@ impl<I: State> Callback<I> {
         let ids = ids_pushed(ids, Some(id));
         Self { 
             ids: ids.clone(),
-            callback: context.map(|context| context.link().callback(move |(ids, item): (Vec<usize>, I)| {
+            callback: context.map(|context| context.link()
+            .callback(move |(ids, item): (Vec<usize>, I)| {
                 Msg::new(0, MessageData::new(ids.clone(), Box::new(item)))
             })),
         }
@@ -116,18 +115,18 @@ impl<I: State> Callback<I> {
 }
 
 #[macro_export]
-macro_rules! impl_state_for {
+macro_rules! impl_message_state_for {
     ( $head: ty $(,$tys: ty)* $(,)? ) => { 
-        impl_state_for!{ @inner($head, $($tys,)*) }
+        impl_message_state_for!{ @inner($head, $($tys,)*) }
     };
     ( @inner($($tys: ty,)*) ) => {    
         $(
-            impl Message for $tys {
+            impl frand_home_node::Message for $tys {
                 fn try_error(err: String) -> anyhow::Result<Self> { 
                     anyhow::bail!("❗ {} try_error({err})", stringify!($tys))
                 }
                 
-                fn try_new(depth: usize, data: MessageData) -> anyhow::Result<Self> {
+                fn try_new(depth: usize, data: frand_home_node::MessageData) -> anyhow::Result<Self> {
                     match data.data.downcast() {
                         Ok(data) => Ok(*data),
                         Err(_) => Err(anyhow::anyhow!("ids: {:?}, depth: {}", data.ids, depth)),
@@ -135,8 +134,8 @@ macro_rules! impl_state_for {
                 }
             }
 
-            impl State for $tys {
-                type Node = ValueNode<Self>;
+            impl frand_home_node::State for $tys {
+                type Node = frand_home_node::ValueNode<Self>;
             }
         )*      
     };

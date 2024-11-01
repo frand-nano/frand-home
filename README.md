@@ -3,8 +3,11 @@ Actix 와 Yew 를 이용하여 Rust 로 개발하는 풀스택 웹 프로젝트
 
 
 ## 목적
-- 간결하고 쉽고 직관적인 기능 코드는 유지보수와 추가 기능 개발을 쉽게 합니다.
-이 프로젝트는 Rust Macro 를 활용한 __Node__ 로 그러한 환경을 구현하는 것을 목적으로 합니다.
+- 서버와 클라이언트 사이의 소켓 통신을 이용한 웹앱을 개발하다 보면 
+실수하기 쉽고 가독성 떨어지는 보일러 플레이트 코드들이 양산됩니다.
+이는 여러 가지 잠재적 보안 위험과 디버깅하기 어려운 버그들을 발생시킬 수 있습니다.
+이 프로젝트는 Rust Macro 를 활용한 __Node__ 로 위와 같은 문제를 줄이고
+높은 생산성과 가독성을 달성하는 프로젝트 기반을 만드는 것을 목적으로 합니다.
 
 
 ## 구조
@@ -23,6 +26,7 @@ __Node__ 는 클라이언트에서 Yew Component 로 전달되어 이벤트를 �
     - HTTP 페이지, 웹소켓 연결
 * 웹앱 컨텐츠: _image/source/app_
     - 상태 관리, 페이지 렌더링, 메시지 핸들링
+    - MySQL, Youtube Data Api 이용
 * 유틸리티: _image/source/node_
     - Node 를 생성하는 매크로와 그 매크로에 관련된 Trait
 * 샘플: _sample_
@@ -36,6 +40,7 @@ __Node__ 는 클라이언트에서 Yew Component 로 전달되어 이벤트를 �
 - Docker Image 생성
 - docker-compose MySQL 접속
 - Youtube data api 를 이용한 플레이리스트 보기
+- MySQL을 이용한 플레이리스트 관리
 
 
 ## 예시
@@ -43,52 +48,50 @@ _image/source/app/music_ 폴더는 템플릿 샘플로 사용될 수 있습니�
 _src/backend/component.rs_ 의 __Music__ 구조체에는 Music 과 관련하여 backend에서 처리해야 할 일들이 통합되어 있습니다.
 _image/source/app/src/backend/component.rs_ 의 __ActixApp__ 구조체에서 각 작업을 __Music__ 에 분배합니다.
 
-State: 
+State: _image/source/app/music/src/state/client/musiclist.rs_
 ```rust
 // Musiclist::{State, Node, Message} 자동 생성
 #[node_state]
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Musiclist {
-    pub playlist_page: PlaylistPage::State,
-    pub list_items: MusiclistItems::State,
-}
-
-// MusiclistItems::{State, Node, Message} 자동 생성
-#[node_state]
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct MusiclistItems {
-    pub next_page_token: Option<String>,
-    pub prev_page_token: Option<String>,
-    pub total_results: usize,
-    pub results_per_page: usize,
-    pub items: Vec<MusiclistItem::State>,    
+    pub page: PlaylistPage::State,
+    pub items: Vec<MusiclistItem::State>,
 }
 
 // MusiclistItem::{State, Node, Message} 자동 생성
 #[node_state]
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct MusiclistItem {
-    pub video_id: String,
+    pub music_id: String,
+    pub datetime: String,
+    pub youtube_title: String,
     pub title: String,
+    pub artist: String,
+    pub upload_by: String,
+    pub lyrics_by: String,
+    pub info: String,
+    pub tag: String,
+    pub volume: i32,
 }
 ```
 
-Layout:
+Layout: _image/source/app/music/src/view/mod.rs_
 ```rust
 pub fn view(
-    server_prop: &MusicServer::Node,
-    client_prop: &MusicClient::Node,
+    server: &MusicServer::Node,
+    client: &MusicClient::Node,
 ) -> Html {
+    // View들에 필요한 Node 들을 배분
     html! {
         <div style="display:flex; flex-direction: row;">
             <PlaylistView 
-                visible = { client_prop.playlist_visible.clone() }
-                list_items = { server_prop.playlist.list_items.clone() }
-                musiclist_playlist_id = { client_prop.musiclist.playlist_page.playlist_id.clone() }
+                visible = { client.playlist_visible.clone() }
+                playlist = { server.playlist.clone() }
+                playlist_page = { client.musiclist.page.clone() }
             />
             <div>
                 <YoutubePlayerView
-                    video_id = { client_prop.youtube_player.video_id.clone() }
+                    video_id = { client.youtube_player.video_id.clone() }
                 />
                 <LyricsView/>
             </div>
@@ -96,68 +99,62 @@ pub fn view(
                 <ServerPlayerView/>        
                 <MusicQueueView/>    
                 <MusiclistView
-                    musiclist = { client_prop.musiclist.clone() }
-                    youtube_player_video_id = { client_prop.youtube_player.video_id.clone() }
+                    musiclist = { client.musiclist.clone() }
+                    pages = {    
+                        // server 의 playlist items 중 client 의 musiclist page id 와 일치하는 아이템의 pages Node
+                        server.playlist.items.iter()
+                        .find(|item| item.playlist_id.clone_state() == client.musiclist.page.id.clone_state())
+                        .map(|playlist| playlist.pages.clone_state())
+                        .unwrap_or_default()  
+                    }
+                    youtube_player_video_id = { client.youtube_player.video_id.clone() }
                 />          
             </div>
         </div>
     }
 }
 ```
-View: 
+View: _image/source/app/music/src/view/musiclist.rs_
 ```rust
 #[derive(Properties, PartialEq)]
 pub struct MusiclistProperty {
     pub musiclist: Musiclist::Node,
+    pub pages: Vec<PlaylistPage::State>,
     pub youtube_player_video_id: ValueNode<String>,
 }
 
 #[function_component]
 pub fn MusiclistView(prop: &MusiclistProperty) -> Html {    
-    let pages = {
-        let page_token = prop.musiclist.playlist_page.page_token.clone();
-        let prev_page_token = prop.musiclist.list_items.prev_page_token.clone_state();
-        let prev_page_disabled = prev_page_token.is_none();
-
-        // {"prev"} 버튼이 클릭되었을 때 page_token Property 의 emit 을 호출하여 서버에 prev_page_token 을 전송
-        let onclick_prev_page = move |_| {
-            page_token.emit(prev_page_token.clone());
+    let pages: Vec<_> = prop.pages.clone().into_iter().enumerate()
+    .map(|(index, page)| {
+        let musiclist_page = prop.musiclist.page.clone();           
+        
+        // {index} 버튼이 클릭되었을 때 musiclist_page Node 의 emit 을 호출하여 
+        // 선택된 page 를 서버에 전송       
+        let onclick_page = move |_| {
+            musiclist_page.emit(page.clone())
         };
-
-        let page_token = prop.musiclist.playlist_page.page_token.clone();
-        let next_page_token = prop.musiclist.list_items.next_page_token.clone_state();
-        let next_page_disabled = next_page_token.is_none();
-
-        // {"next"} 버튼이 클릭되었을 때 page_token Property 의 emit 을 호출하여 서버에 next_page_token 을 전송
-        let onclick_next_page = move |_| {
-            page_token.emit(next_page_token.clone());
-        };
-
-        html! {
-            <div>
-                <button disabled={prev_page_disabled} onclick={onclick_prev_page}>
-                {"prev"}
-                </button>
-                <button disabled={next_page_disabled} onclick={onclick_next_page}>
-                {"next"}
-                </button>
-            </div>
+        html! {        
+            <button onclick={onclick_page}>
+            {index}
+            </button>
         }
-    };
+    })
+    .collect();
 
-    let items: Vec<_> = prop.musiclist.list_items.items.iter()
+    let items: Vec<_> = prop.musiclist.items.iter()
     .map(|item| {
         let youtube_player_video_id = prop.youtube_player_video_id.clone();
-        let title = item.title.clone_state();
-        let video_id = item.video_id.clone_state();
-
-        // {title} 버튼이 클릭되었을 때 youtube_player_video_id Property 의 emit 을 호출하여 서버에 video_id 를 전송
+        let youtube_title = item.youtube_title.clone_state();
+        let music_id = item.music_id.clone_state();
+        
+        // {title} 버튼이 클릭되었을 때 youtube_player_video_id Node 의 emit 을 호출하여 서버에 music_id 를 전송        
         let onclick_music = move |_| {
-            youtube_player_video_id.emit(video_id.clone())
+            youtube_player_video_id.emit(music_id.clone())
         };
         html! {
             <button onclick={onclick_music}>
-            {title}
+            {youtube_title}
             </button>
         }
     }).collect(); 
@@ -165,7 +162,7 @@ pub fn MusiclistView(prop: &MusiclistProperty) -> Html {
     html! {
         <div style="display:flex; flex-direction: column;">
             <p>{"Musiclist"}</p>
-            {pages}
+            <div> {pages} </div>
             {items}
         </div>
     }
@@ -173,36 +170,33 @@ pub fn MusiclistView(prop: &MusiclistProperty) -> Html {
 ```
 
 Control:
-__handle_client_message__ 에서는 메시지를 보낸 클라이언트의 __ClientState__ 에 접근할 수 있고 
+__handle_client_message__ 에서는 __ServerState__ 를 읽을 수 있으며
+메시지를 보낸 클라이언트의 __ClientState__ 를 편집할 수 있고
 해당 클라이언트에 결과 메시지를 보낼 수 있습니다.
 ```rust
 pub async fn handle_client_message<Msg: RootMessage>(
     &self,
     sender: &UnboundedSender<Msg>,
-    prop: &mut MusicClient::Node,
+    _server: &MusicServer::Node,
+    client: &mut MusicClient::Node,
     message: MusicClient::Message,
 ) -> anyhow::Result<()> {
     Ok(match message {
-        // Musiclist PlaylistPage 패턴의 메시지가 서버에 수신되었을 때 추가 처리:
-        // client 로부터 playlistPage의 변경을 요청하는 메시지가 수신되었을 때
-        // playlistPage 에 해당하는 playlist_items 를 youtube api 로 얻어서
-        // playlist_items 를 넣는 동작에 해당하는 메시지를 클라이언트에 전송
+        // Musiclist Page 패턴의 메시지가 서버에 수신되었을 때 추가 처리:
+        // 수신된 page 정보를 select_musics 함수에 전달하여 
+        // DB 로부터 Musiclist Item 들을 쿼리하여 Node에 Apply 하고 
+        // 그 동작에 해당하는 Message 를 Export
         MusicClient::Message::Musiclist(
-            Musiclist::Message::PlaylistPage(_)        
-        ) => {
-            // youtube data api 를 이용하여 playlist 데이터를 얻음
-            let playlist_items = youtube::PlaylistItems::youtube_get(
-                self,
-                &prop.musiclist.playlist_page.clone_state(),
-            ).await?;
+            Musiclist::Message::Page(_)        
+        ) => {    
+            let message: Msg = client.musiclist.items.apply_export(
+                select_musics(
+                    &mut self.pool.get_conn()?, 
+                    &client.musiclist.page.clone_state(),
+                )?,
+            ); 
 
-            // musiclist.list_items 에 playlist_items 값을 넣고
-            // 위 동작에 해당하는 message 를 생성
-            let message: Msg = prop.musiclist.list_items.apply_export(
-                playlist_items.into(),
-            );          
-                            
-            // 클라이언트에 playlist_items 값을 넣는 메시지를 전송
+            // 클라이언트에 musiclist.items 값을 넣는 메시지를 전송
             sender.send(message)?;  
         },
         _ => {},
@@ -210,5 +204,50 @@ pub async fn handle_client_message<Msg: RootMessage>(
 }   
 ```
 
-__handle_server_message__ 에서는 __ServerState__ 에 접근할 수 있고 
+__handle_server_message__ 에서는 __ServerState__ 를 편집할 수 있고
 모든 클라이언트에 결과 메시지를 보낼 수 있습니다.
+```rust
+pub async fn handle_server_message<Msg: RootMessage>(
+    &self,
+    senders: &HashMap<Uuid, UnboundedSender<Msg>>,
+    server: &mut MusicServer::Node,
+    message: MusicServer::Message,
+) -> anyhow::Result<()> {
+    Ok(match message {
+        // Playlist Items Item Update 패턴의 메시지가 서버에 수신되었을 때 추가 처리:
+        // 수신된 index 에 해당하는 PlaylistItem 의 playlist_id를 insert_update_musics 함수에 전달하여
+        // Youtube Data Api 를 이용하여 음악들의 정보를 DB에 업데이트
+        MusicServer::Message::Playlist(
+            Playlist::Message::Items(
+                VecMessage::Item(
+                    (index, PlaylistItem::Message::Update(update))
+                )
+            )
+        ) if update => {
+            let node = server.playlist.items
+            .get_mut(index).ok_or(anyhow!("server.playlist.list_items.items has no index {index}"))?;
+
+            // 모든 클라이언트에 update 시작 메시지 전송
+            let message: Msg = node.update.apply_export(true);            
+            for sender in senders.values() {
+                sender.send(message.clone())?;
+            }
+                        
+            // Youtube Data Api 를 이용하여 음악들의 정보를 DB에 업데이트
+            insert_update_musics(
+                &self.client, 
+                &self.config, 
+                &mut self.pool.get_conn()?, 
+                &node.playlist_id.clone_state(),
+            ).await?;               
+
+            // 모든 클라이언트에 update 완료 메시지 전송
+            let message: Msg = node.update.apply_export(false);    
+            for sender in senders.values() {
+                sender.send(message.clone())?;
+            }
+        },
+        _ => {},
+    })
+}
+```

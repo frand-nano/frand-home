@@ -15,7 +15,7 @@ pub async fn get_index(
     match NamedFile::open_async("./target/dist/index.html").await {
         Ok(response) => response.into_response(&request),
         Err(err) => {
-            log::error!("❗ get_index err: {err}");  
+            log::error!(" get_index err: {err}");  
             HttpResponse::InternalServerError().finish()  
         },
     }
@@ -28,7 +28,7 @@ pub async fn get_index_favicon(
     match NamedFile::open_async("./res/favicon.ico").await {
         Ok(response) => response.into_response(&request),
         Err(err) => {
-            log::error!("❗ get_index_favicon err: {err}");  
+            log::error!(" get_index_favicon err: {err}");  
             HttpResponse::NotFound().finish()    
         },
     }
@@ -48,7 +48,7 @@ pub async fn get_index_path(
     match NamedFile::open_async(format!("./target/dist/frand-home-yew-{path}")).await {
         Ok(response) => response.into_response(&request),
         Err(err) => {
-            log::error!("❗ get_index_path path: {path}, err: {err}");  
+            log::error!(" get_index_path path: {path}, err: {err}");  
             HttpResponse::NotFound().finish()   
         },
     }

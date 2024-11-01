@@ -109,7 +109,7 @@ pub fn node_state(
             fn apply(&mut self, message: Self::Message) {
                 match message {
                     #message_name::Error(err) => {
-                        log::error!("❗ {}.apply_message: {err}", stringify!(#node_name));
+                        log::error!(" {}.apply_message: {err}", stringify!(#node_name));
                     },
                     #message_name::State(state) => self.apply_state(state),
                     #(#message_name::#pascal_names(message) => self.#field_names.apply(message),)*

@@ -1,3 +1,4 @@
+use frand_home_node::Node;
 use lyrics::LyricsView;
 use music_queue::MusicQueueView;
 use musiclist::MusiclistView;
@@ -16,19 +17,19 @@ pub mod server_player;
 pub mod music_queue;
 
 pub fn view(
-    server_prop: &MusicServer::Node,
-    client_prop: &MusicClient::Node,
+    server: &MusicServer::Node,
+    client: &MusicClient::Node,
 ) -> Html {
     html! {
         <div style="display:flex; flex-direction: row;">
             <PlaylistView 
-                visible = { client_prop.playlist_visible.clone() }
-                list_items = { server_prop.playlist.list_items.clone() }
-                musiclist_playlist_id = { client_prop.musiclist.playlist_page.playlist_id.clone() }
+                visible = { client.playlist_visible.clone() }
+                playlist = { server.playlist.clone() }
+                playlist_page = { client.musiclist.page.clone() }
             />
             <div>
                 <YoutubePlayerView
-                    video_id = { client_prop.youtube_player.video_id.clone() }
+                    video_id = { client.youtube_player.video_id.clone() }
                 />
                 <LyricsView/>
             </div>
@@ -36,8 +37,14 @@ pub fn view(
                 <ServerPlayerView/>        
                 <MusicQueueView/>    
                 <MusiclistView
-                    musiclist = { client_prop.musiclist.clone() }
-                    youtube_player_video_id = { client_prop.youtube_player.video_id.clone() }
+                    musiclist = { client.musiclist.clone() }
+                    pages = {    
+                        server.playlist.items.iter()
+                        .find(|item| item.playlist_id.clone_state() == client.musiclist.page.id.clone_state())
+                        .map(|playlist| playlist.pages.clone_state())
+                        .unwrap_or_default()  
+                    }
+                    youtube_player_video_id = { client.youtube_player.video_id.clone() }
                 />          
             </div>
         </div>

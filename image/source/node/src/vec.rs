@@ -124,7 +124,7 @@ impl<I: State> Node<Vec<I>> for VecNode<I>
     fn apply(&mut self, message: Self::Message) {
         match message {
             VecMessage::Error(err) => {
-                log::error!("❗ {}.apply_message: {err}", stringify!(VecNode));
+                log::error!(" {}.apply_message: {err}", stringify!(VecNode));
             },
             VecMessage::State(state) => self.apply_state(state),
             VecMessage::Item((index, message)) => {
@@ -170,6 +170,6 @@ impl<I: State> VecNode<I>
 {
     pub fn push_callback(&self) -> &Callback<I> { &self.push_callback }
     pub fn pop_callback(&self) -> &Callback<()> { &self.pop_callback }
-    pub fn item(&self, index: usize) -> &I::Node { &self.state[index] }
-    pub fn item_mut(&mut self, index: usize) -> &mut I::Node { &mut self.state[index] }
+    pub fn get(&self, index: usize) -> Option<&I::Node> { self.state.get(index) }
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut I::Node> { self.state.get_mut(index) }
 }

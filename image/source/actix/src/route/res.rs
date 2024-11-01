@@ -17,7 +17,7 @@ pub async fn get_res_path(
     match NamedFile::open_async(format!("./res/{path}")).await {
         Ok(response) => response.into_response(&request),
         Err(err) => {
-            log::error!("❗ get_res_path path: {path}, err: {err}");  
+            log::error!(" get_res_path path: {path}, err: {err}");  
             HttpResponse::NotFound().finish()   
         },
     }

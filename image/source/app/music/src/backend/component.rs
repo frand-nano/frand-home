@@ -1,18 +1,18 @@
 use std::collections::HashMap;
-
+use anyhow::anyhow;
 use frand_home_node::{Node, RootMessage, VecMessage};
 use mysql::Pool;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
-use crate::state::{client::{music_client::MusicClient, musiclist::Musiclist}, server::{playlist::{PlaylistItem, PlaylistItems, Playlist}, music_server::MusicServer}};
+use crate::state::{client::{music_client::MusicClient, musiclist::Musiclist}, server::{music_server::MusicServer, playlist::{PlaylistItem, Playlist}}};
 
-use super::{config::Config, database::init_database, youtube};
+use super::{config::Config, database::{init_database, music::insert_update_musics, select_music_ranges, select_musics}, youtube};
 
 pub struct Music {
-    pub config: &'static Config,
-    pub client: awc::Client,
-    pub pool: Pool,
+    config: &'static Config,
+    client: awc::Client,
+    pool: Pool,
 }
 
 impl Music {    
@@ -31,9 +31,7 @@ impl Music {
         &self,
     ) -> anyhow::Result<MusicServer::State> {
         Ok(MusicServer::State {
-            playlist: Playlist::State {
-                list_items: youtube::Playlist::youtube_get(self).await?.into(), 
-            },
+            playlist: self.get_playlists().await?,
         })
     }
 
@@ -51,26 +49,31 @@ impl Music {
     pub async fn handle_server_message<Msg: RootMessage>(
         &self,
         senders: &HashMap<Uuid, UnboundedSender<Msg>>,
-        prop: &mut MusicServer::Node,
+        server: &mut MusicServer::Node,
         message: MusicServer::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
             MusicServer::Message::Playlist(
-                Playlist::Message::ListItems(
-                    PlaylistItems::Message::Items(
-                        VecMessage::Item(
-                            (index, PlaylistItem::Message::Refresh(refresh))
-                        )
+                Playlist::Message::Items(
+                    VecMessage::Item(
+                        (index, PlaylistItem::Message::Update(update))
                     )
                 )
-            ) => {
-                if refresh {
-                    let refresh = &mut prop.playlist.list_items.items.item_mut(index).refresh;
-                    let message: Msg = refresh.apply_export(false);
-                                
-                    for sender in senders.values() {
-                        sender.send(message.clone())?;
-                    }
+            ) if update => {
+                let node = server.playlist.items
+                .get_mut(index).ok_or(anyhow!("server.playlist.list_items.items has no index {index}"))?;
+
+                let message: Msg = node.update.apply_export(false);
+                            
+                insert_update_musics(
+                    &self.client, 
+                    &self.config, 
+                    &mut self.pool.get_conn()?, 
+                    &node.playlist_id.clone_state(),
+                ).await?;               
+
+                for sender in senders.values() {
+                    sender.send(message.clone())?;
                 }
             },
             _ => {},
@@ -80,20 +83,19 @@ impl Music {
     pub async fn handle_client_message<Msg: RootMessage>(
         &self,
         sender: &UnboundedSender<Msg>,
-        prop: &mut MusicClient::Node,
+        _server: &MusicServer::Node,
+        client: &mut MusicClient::Node,
         message: MusicClient::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
             MusicClient::Message::Musiclist(
-                Musiclist::Message::PlaylistPage(_)        
-            ) => {
-                let playlist_items = youtube::PlaylistItems::youtube_get(
-                    self,
-                    &prop.musiclist.playlist_page.clone_state(),
-                ).await?;
-    
-                let message: Msg = prop.musiclist.list_items.apply_export(
-                    playlist_items.into(),
+                Musiclist::Message::Page(_)        
+            ) => {    
+                let message: Msg = client.musiclist.items.apply_export(
+                    select_musics(
+                        &mut self.pool.get_conn()?, 
+                        &client.musiclist.page.clone_state(),
+                    )?,
                 );          
                                 
                 sender.send(message)?;  
@@ -101,4 +103,33 @@ impl Music {
             _ => {},
         })
     }   
+}
+
+impl Music {
+    async fn get_playlists(&self) -> anyhow::Result<Playlist::State> {
+        let playlist = youtube::Playlist::youtube_get(
+            &self.client, 
+            &self.config,
+        ).await?;
+
+        let mut conn = self.pool.get_conn()?;
+
+        let items = playlist.items.into_iter()
+        .map(|item| {
+            let playlist_id = self.config.playlist_id(&item.id)?;
+
+            Ok(PlaylistItem::State { 
+                youtube_title: item.snippet.title, 
+                update: false, 
+                pages: select_music_ranges(&self.config, &mut conn, &playlist_id)?, 
+                playlist_id,
+            })
+        })
+        .collect::<anyhow::Result<Vec<_>>>()?;
+
+        Ok(Playlist::State {
+            items,
+        })
+    }
+
 }

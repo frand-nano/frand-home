@@ -1,3 +1,5 @@
+use std::{thread, time::Duration};
+
 use actix::spawn;
 use anyhow::anyhow;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
@@ -35,8 +37,17 @@ async fn main() -> anyhow::Result<()> {
 
     let session_secret = CONFIG.session_secret()?;   
      
-    let (server, message_sender) = Server::new().await?;
-    let server_handle = spawn(server.run());
+    let (mut server, message_sender) = Server::new().await?;
+
+    let server_handle = spawn(async move {loop { 
+        match server.run().await {
+            Ok(_) => break,
+            Err(err) => {                
+                log::error!("{err}");
+                thread::sleep(Duration::from_secs(1))
+            },
+        }        
+    }});
 
     let http_server = HttpServer::new(move || {
         App::new()
@@ -72,9 +83,10 @@ async fn main() -> anyhow::Result<()> {
     let http_server = http_server?.run();
 
     let server_handle = async move { 
-        server_handle.await
-        .map_err(|err| std::io::Error::from(err)) 
+        server_handle.await.map_err(|err| std::io::Error::from(err)) 
     };
     
-    try_join!(http_server, server_handle)?.1
+    try_join!(http_server, server_handle)?;
+
+    Ok(())
 }

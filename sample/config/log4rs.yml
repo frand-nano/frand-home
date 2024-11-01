@@ -43,7 +43,7 @@ appenders:
         level: error
     path: "./data/log/error.log"
     encoder:
-      pattern: "📋{d} {l} {t}{n}{m}{n}{n}"
+      pattern: "📋❗{d} {l} {t}{n}{m}{n}{n}"
 
 root:
   appenders:

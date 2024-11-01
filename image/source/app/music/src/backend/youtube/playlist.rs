@@ -1,7 +1,8 @@
 use anyhow::anyhow;
+use awc::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::{backend::component::Music, state::server::playlist};
+use crate::backend::config::Config;
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -9,28 +10,51 @@ pub struct Playlist {
     pub items: Vec<PlaylistItem>,    
 }
 
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistItem {
+    pub id: String,
+    pub snippet: PlaylistItemSnippet,
+}
+
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistItemSnippet {
+    pub title: String,
+}
+
 impl Playlist {
     pub async fn youtube_get(
-        music: &Music,
+        client: &Client,
+        config: &Config,
     ) -> anyhow::Result<Self> {
-        let playlists = music.config.playlists.join(",");
+        let playlists = config.playlists.iter()
+        .map(|t| t.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+
         let params = [
             ("part", "snippet"),
             ("id", &playlists),
-            ("key", &music.config.youtube_api_key),
-            ("maxResults", &music.config.youtube_playlists_max_results.to_string()),
+            ("key", &config.youtube_api_key),
+            ("maxResults", &config.youtube_playlists_max_results.to_string()),
         ];
-        let mut response = music.client
-        .get(&music.config.youtube_playlists)
+
+        let mut response = client
+        .get(&config.youtube_playlists)
         .query(&params)?
         .send().await
         .map_err(|err| anyhow!("{err}"))?;
 
         let result = if response.status().is_success() {
+            log::info!("🔎 Playlist::youtube_get playlists: {}",
+                playlists,
+            );
+
             response.json::<Self>().await
             .map_err(|err| err.into())
         } else {
-            log::error!("❗ Playlist::youtube_get 
+            log::error!(" Playlist::youtube_get 
                 playlists: {}, 
                 response.json(): {:#?},
                 ",
@@ -42,35 +66,4 @@ impl Playlist {
 
         result
     }
-}
-
-impl From<Playlist> for playlist::PlaylistItems::State {
-    fn from(value: Playlist) -> Self {
-        Self { 
-            items: value.items.into_iter().map(|item| item.into()).collect(), 
-        }
-    }
-}
-
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct PlaylistItem {
-    pub id: String,
-    pub snippet: PlaylistItemSnippet,
-}
-
-impl From<PlaylistItem> for playlist::PlaylistItem::State {
-    fn from(value: PlaylistItem) -> Self {
-        Self {
-            playlist_id: value.id,
-            title: value.snippet.title,
-            refresh: false,
-        }
-    }
-}
-
-#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct PlaylistItemSnippet {
-    pub title: String,
 }

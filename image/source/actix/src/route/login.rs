@@ -10,21 +10,21 @@ pub async fn get_login(request: HttpRequest) -> HttpResponse {
     let peer_ip = match request.peer_addr() {
         Some(peer_addr) => peer_addr.ip().to_string(),
         None => {
-            log::error!("❗ get_login request.peer_addr() is None");          
+            log::error!(" get_login request.peer_addr() is None");          
             String::from("None")
         },
     };
     let state = Uuid::new_v4().to_string();
 
     if let Err(err) = session.insert("peer_ip", &peer_ip) {
-        log::error!("❗ get_login session.insert 
+        log::error!(" get_login session.insert 
             peer_ip: {peer_ip}, 
             err: {err},
         ");          
     }
 
     if let Err(err) = session.insert("state", &state) {
-        log::error!("❗ get_login session.insert 
+        log::error!(" get_login session.insert 
             state: {state}, 
             err: {err},
         ");         

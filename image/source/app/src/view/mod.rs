@@ -6,16 +6,16 @@ use crate::state::{client::client::Client, server::server::Server};
 pub mod task_bar;
 
 pub fn view(
-    server_prop: &Server::Node,
-    client_prop: &Client::Node,
+    server: &Server::Node,
+    client: &Client::Node,
 ) -> Html {
     html! {
         <div>
             <TaskBarView
-                user = { client_prop.user.clone() }
-                task_bar = { client_prop.task_bar.clone() }
+                user = { client.user.clone() }
+                task_bar = { client.task_bar.clone() }
             />     
-            {frand_home_music::view(&server_prop.music, &client_prop.music)}
+            {frand_home_music::view(&server.music, &client.music)}
         </div>
     }
 }

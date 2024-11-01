@@ -11,8 +11,8 @@ pub struct Server {
     pub receiver: UnboundedReceiver<ServerMessage>,
     pub users: HashMap<Uuid, User>,
     pub senders: HashMap<Uuid, UnboundedSender<App::Message>>,
-    pub socket_prop: App::Node,
-    pub client_props: HashMap<Uuid, Client::Node>,
+    pub app_node: App::Node,
+    pub client_nodes: HashMap<Uuid, Client::Node>,
 }
 
 #[derive(Debug, Clone)]
@@ -43,23 +43,25 @@ impl Server {
 
         let app = ActixApp::new(&APP_CONFIG, &mysql_url)?;
 
-        let mut socket_prop = App::Node::default();
-        socket_prop.server.apply_state(app.new_server_state().await?);
-        socket_prop.client.apply_state(app.new_client_state().await?);
+        let mut app_node = App::Node::default();
+        app_node.server.apply_state(app.new_server_state().await?);
+        app_node.client.apply_state(app.new_client_state().await?);
+
+        log::info!("Server State: {:#?}", app_node.clone_state());
 
         let server = Self {
             app,
             receiver,      
             users: HashMap::new(),     
             senders: HashMap::new(),    
-            socket_prop, 
-            client_props: HashMap::new(),     
+            app_node, 
+            client_nodes: HashMap::new(),     
         };
         
         Ok((server, sender))
     }
 
-    pub async fn run(mut self) -> anyhow::Result<()> {
+    pub async fn run(&mut self) -> anyhow::Result<()> {
         while let Some(message) = self.receiver.recv().await { 
             self.handle_message(message).await?;
         }

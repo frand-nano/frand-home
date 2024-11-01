@@ -1,7 +1,7 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Range};
 use yew::{BaseComponent, Context, Properties};
 
-use crate::{base::{ids_pushed, Callback, State, Message, RootMessage, MessageData, Node, STATE_ID}, impl_state_for};
+use crate::{base::{ids_pushed, Callback, State, Message, RootMessage, Node, STATE_ID}, impl_message_state_for, frand_home_node};
 
 #[derive(Debug, Clone, Properties)]
 pub struct ValueNode<S: State> {
@@ -10,12 +10,12 @@ pub struct ValueNode<S: State> {
     state: S,
 }
 
-impl_state_for!{ 
+impl_message_state_for!{ 
     i8, i16, i32, i64, i128, isize,
     u8, u16, u32, u64, u128, usize,
     f32, f64,
     char, bool, (),
-    String,
+    String, Range<isize>, Range<usize>,
 }
 
 impl<S: State> ValueNode<S> {

@@ -37,7 +37,7 @@ async fn spawn_message_loop(
     let (client_sender, mut client_receiver) = unbounded_channel();
     let server_handle = match ServerHandle::new(user.clone(), server_sender, client_sender) {
         Ok(server_handle) => server_handle,
-        Err(err) => return log::error!("❗ {user} 🔗 ServerHandle::new err: {err}"),
+        Err(err) => return log::error!(" {user} 🔗 ServerHandle::new err: {err}"),
     };
 
     let user_clone = user.clone();
@@ -51,7 +51,7 @@ async fn spawn_message_loop(
                         log::info!("{user_clone} 🔗 Closed({err})");
                     }                    
                 },
-                Err(err) => log::error!("❗ {user_clone} 🔗 Message Serialize err: {err}"),
+                Err(err) => log::error!(" {user_clone} 🔗 Message Serialize err: {err}"),
             }
         }
     });    
@@ -65,10 +65,10 @@ async fn spawn_message_loop(
                     match App::Message::try_from(&json) {
                         Ok(message) => {
                             if let Err(err) = server_handle.send(message) {
-                                log::error!("❗ {user_clone} 🔗 Send Message err: {err}");
+                                log::error!(" {user_clone} 🔗 Send Message err: {err}");
                             }
                         },
-                        Err(err) => log::error!("❗ {user_clone} 🔗 Message Deserialize err: {err}"),
+                        Err(err) => log::error!(" {user_clone} 🔗 Message Deserialize err: {err}"),
                     }             
                 },
                 Ok(Message::Ping(message)) => {
@@ -83,7 +83,7 @@ async fn spawn_message_loop(
                     log::info!("{user_clone} 🔗 Close({code}) {desc}");
                 },
                 Ok(message) => log::debug!("{user_clone} 🔗 Message({:#?})", message),
-                Err(err) => log::error!("❗ {user_clone} 🔗 Err({err})"),
+                Err(err) => log::error!(" {user_clone} 🔗 Err({err})"),
             }
         }
     });    

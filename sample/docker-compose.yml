@@ -12,10 +12,6 @@ services:
       MYSQL_ROOT_HOST: "%"
       MYSQL_USER: ${FRAND_HOME_MYSQL_USER}
       MYSQL_PASSWORD: ${FRAND_HOME_MYSQL_PASSWORD}   
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --skip-character-set-client-handshake
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
       timeout: 20s

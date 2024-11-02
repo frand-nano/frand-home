@@ -5,9 +5,9 @@ use mysql::Pool;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
-use crate::state::{client::{music_client::MusicClient, musiclist::Musiclist}, server::{music_server::MusicServer, playlist::{PlaylistItem, Playlist}}};
+use crate::state::{client::{music_client::MusicClient, musiclist::Musiclist, youtube_player::YoutubePlayer}, server::{music_server::MusicServer, playlist::{Playlist, PlaylistItem}}};
 
-use super::{config::Config, database::{init_database, music::insert_update_musics, select_music_ranges, select_musics}, youtube};
+use super::{config::Config, database::{init_database, music::insert_update_musics, select_playlist_pages, select_musics}, youtube::{self, get_playlist_items_all}};
 
 pub struct Music {
     config: &'static Config,
@@ -37,11 +37,39 @@ impl Music {
 
     pub async fn new_client_state(
         &self,
-    ) -> anyhow::Result<MusicClient::State> {              
+    ) -> anyhow::Result<MusicClient::State> {    
+        let playlist = self.get_playlists().await?
+        .items.first()
+        .map(|t| t.to_owned());
+
+        let pages = match playlist {
+            Some(playlist) => select_playlist_pages(
+                &self.config, 
+                &mut self.pool.get_conn()?, 
+                &playlist.page.id,
+            )?,
+            None => Default::default(),
+        };
+
+        let page = pages.first().map(|page| page.to_owned()).unwrap_or_default();
+        
+        let items = select_musics(
+            &mut self.pool.get_conn()?, 
+            &page,
+        )?;
+
+        let music_id = items.first().map(|item| item.music_id.to_owned()).unwrap_or_default();
+
         Ok(MusicClient::State {
             playlist_visible: true,
-            musiclist: Default::default(),
-            youtube_player: Default::default(),
+            musiclist: Musiclist::State { 
+                page, 
+                pages, 
+                items, 
+            },
+            youtube_player: YoutubePlayer::State {
+                music_id,
+            },
             lyrics: Default::default(),
         })
     }
@@ -60,18 +88,44 @@ impl Music {
                     )
                 )
             ) if update => {
-                let node = server.playlist.items
-                .get_mut(index).ok_or(anyhow!("server.playlist.list_items.items has no index {index}"))?;
+                let playlist = server.playlist.items
+                .get_mut(index)
+                .ok_or(anyhow!("server.playlist.list_items.items has no index {index}"))?;
 
-                let message: Msg = node.update.apply_export(false);
+                let message: Msg = playlist.update.apply_export(true);
+                for sender in senders.values() {
+                    sender.send(message.clone())?;
+                }
                             
-                insert_update_musics(
+                let playlist_page = playlist.page.clone_state();
+                let mut conn = self.pool.get_conn()?;
+                
+                let playlist_items = get_playlist_items_all(
                     &self.client, 
                     &self.config, 
-                    &mut self.pool.get_conn()?, 
-                    &node.playlist_id.clone_state(),
+                    &playlist_page.id,
+                ).await?;
+
+                insert_update_musics(
+                    &mut conn, 
+                    &playlist_page.id,
+                    playlist_items,
                 ).await?;               
 
+                let pages = select_playlist_pages(
+                    &self.config, 
+                    &mut conn, 
+                    &playlist_page.id,
+                )?;
+
+                if let Some(page) = pages.first() {
+                    let message: Msg = playlist.page.apply_export(page.to_owned());
+                    for sender in senders.values() {
+                        sender.send(message.clone())?;
+                    }
+                } 
+
+                let message: Msg = playlist.update.apply_export(false);
                 for sender in senders.values() {
                     sender.send(message.clone())?;
                 }
@@ -91,10 +145,11 @@ impl Music {
             MusicClient::Message::Musiclist(
                 Musiclist::Message::Page(_)        
             ) => {    
+                let page = client.musiclist.page.clone_state();
                 let message: Msg = client.musiclist.items.apply_export(
                     select_musics(
                         &mut self.pool.get_conn()?, 
-                        &client.musiclist.page.clone_state(),
+                        &page,
                     )?,
                 );          
                                 
@@ -118,17 +173,24 @@ impl Music {
         .map(|item| {
             let playlist_id = self.config.playlist_id(&item.id)?;
 
-            Ok(PlaylistItem::State { 
-                youtube_title: item.snippet.title, 
-                update: false, 
-                pages: select_music_ranges(&self.config, &mut conn, &playlist_id)?, 
-                playlist_id,
-            })
+            let pages = select_playlist_pages(
+                &self.config, 
+                &mut conn, 
+                &playlist_id,
+            )?;
+
+            Ok(pages.first().map(|page| {
+                PlaylistItem::State { 
+                    youtube_title: item.snippet.title, 
+                    update: false, 
+                    page: page.to_owned(), 
+                }
+            }))            
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
 
         Ok(Playlist::State {
-            items,
+            items: items.into_iter().filter_map(|t| t).collect(),
         })
     }
 

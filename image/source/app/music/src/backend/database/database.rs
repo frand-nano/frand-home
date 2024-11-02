@@ -7,7 +7,7 @@ pub fn init_database(
     mysql_url: &str,
 ) -> anyhow::Result<Pool> {
     let name = "music";
-    let pool = Pool::new(mysql_url)?;
+    let pool = Pool::new(format!("{mysql_url}").as_str())?;
     let mut conn = pool.get_conn()?;
 
     conn.query_drop(format!(r#"
@@ -21,13 +21,13 @@ pub fn init_database(
         CREATE TABLE IF NOT EXISTS music (
             music_id CHAR(12) PRIMARY KEY,
             datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
-            youtube_title NVARCHAR(200),
-            title NVARCHAR(100),
-            artist NVARCHAR(100),
-            upload_by NVARCHAR(100),
-            lyrics_by NVARCHAR(100),
-            info NVARCHAR(100),
-            tag NVARCHAR(100),
+            youtube_title VARCHAR(200),
+            title VARCHAR(100),
+            artist VARCHAR(100),
+            upload_by VARCHAR(100),
+            lyrics_by VARCHAR(100),
+            info VARCHAR(100),
+            tag VARCHAR(100),
             volume INT
         ) 
     "#))?;
@@ -136,7 +136,7 @@ pub fn insert_update_music(
     Ok(())
 }
 
-pub fn select_music_ranges(
+pub fn select_playlist_pages(
     config: &Config,
     conn: &mut PooledConn,
     playlist_id: &PlaylistId,
@@ -183,7 +183,8 @@ pub fn select_musics(
         "playlist_id" => page.id.as_str(),
     }; 
 
-    let (start, end) = (page.range.start, page.range.end);
+    let (min, max) = (page.range.start.min(page.range.end), page.range.start.max(page.range.end));
+    let (min, length) = (page.range.start, max - min);
 
     let musics: Vec<MusiclistItem::State> = conn.exec(
         format!(r#"
@@ -192,7 +193,8 @@ pub fn select_musics(
             RIGHT JOIN music
             ON musiclist.music_id = music.music_id
             WHERE musiclist.playlist_id = :playlist_id
-            LIMIT {start}, {end}
+            ORDER BY datetime, music_id
+            LIMIT {min}, {length}
         "#),
         params,
     )?.into_iter()

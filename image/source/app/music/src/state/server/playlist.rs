@@ -13,8 +13,7 @@ pub struct Playlist {
 pub struct PlaylistItem {
     pub youtube_title: String,
     pub update: bool,
-    pub playlist_id: PlaylistId,
-    pub pages: Vec<PlaylistPage::State>,
+    pub page: PlaylistPage::State,
 }
 
 #[node_state]

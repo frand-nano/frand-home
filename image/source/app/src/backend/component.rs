@@ -44,12 +44,16 @@ impl ActixApp {
     pub async fn handle_server_message<Msg: RootMessage>(
         &self,
         senders: &HashMap<Uuid, UnboundedSender<Msg>>,
+        sender: &UnboundedSender<Msg>,
         server: &mut Server::Node,
+        client: &mut Client::Node,
         message: Server::Message,
     ) -> anyhow::Result<()> {
         Ok(match message {
             Server::Message::Music(message) => {
-                Music::handle_server_message(&self.music, senders, &mut server.music, message).await?
+                Music::handle_server_message(
+                    &self.music, senders, sender, &mut server.music, &mut client.music, message,
+                ).await?
             },
             _ => {},
         })
@@ -64,7 +68,9 @@ impl ActixApp {
     ) -> anyhow::Result<()> {
         Ok(match message {
             Client::Message::Music(message) => {
-                Music::handle_client_message(&self.music, sender, &server.music, &mut client.music, message).await?
+                Music::handle_client_message(
+                    &self.music, sender, &server.music, &mut client.music, message,
+                ).await?
             },
             _ => {},
         })

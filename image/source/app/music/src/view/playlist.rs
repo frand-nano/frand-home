@@ -23,13 +23,10 @@ pub fn PlaylistView(prop: &PlaylistProperty) -> Html {
     .map(|(_, item)| {
         let playlist_page = prop.playlist_page.clone();
         let youtube_title = item.youtube_title.clone_state();
-        let page = item.pages.get(0).map(|page| page.clone_state());
-        let page_disabled = page.is_none();
+        let page = item.page.clone_state();
+        let page_disabled = page.id.to_string().is_empty();
         let onclick_playlist = move |_| {         
-            match page.clone() {
-                Some(page) => playlist_page.emit(page),
-                None => todo!(),
-            }            
+            playlist_page.emit(page.clone())          
         };
 
         let item_update = item.update.clone();
@@ -53,7 +50,7 @@ pub fn PlaylistView(prop: &PlaylistProperty) -> Html {
     match visible_value {
         true => {
             html! {
-                <div style="display:flex; flex-direction: column;">                    
+                <div class="vertical_div">                    
                     <button onclick={onclick_visible}>{" < Playlist"}</button>
                     {items}
                 </div>

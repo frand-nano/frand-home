@@ -47,10 +47,6 @@ impl Playlist {
         .map_err(|err| anyhow!("{err}"))?;
 
         let result = if response.status().is_success() {
-            log::info!("🔎 Playlist::youtube_get playlists: {}",
-                playlists,
-            );
-
             response.json::<Self>().await
             .map_err(|err| err.into())
         } else {
@@ -63,6 +59,10 @@ impl Playlist {
             );
             Err(anyhow!("response.status(): {}", response.status()))
         };
+
+        log::info!("🔎 Playlist::youtube_get playlists: {}, result: {:#?}",
+            playlists, result,
+        );
 
         result
     }

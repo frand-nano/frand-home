@@ -1,4 +1,3 @@
-use frand_home_node::Node;
 use lyrics::LyricsView;
 use music_queue::MusicQueueView;
 use musiclist::MusiclistView;
@@ -21,7 +20,7 @@ pub fn view(
     client: &MusicClient::Node,
 ) -> Html {
     html! {
-        <div style="display:flex; flex-direction: row;">
+        <div class="horizontal_div">
             <PlaylistView 
                 visible = { client.playlist_visible.clone() }
                 playlist = { server.playlist.clone() }
@@ -29,7 +28,7 @@ pub fn view(
             />
             <div>
                 <YoutubePlayerView
-                    video_id = { client.youtube_player.video_id.clone() }
+                    music_id = { client.youtube_player.music_id.clone() }
                 />
                 <LyricsView/>
             </div>
@@ -38,13 +37,7 @@ pub fn view(
                 <MusicQueueView/>    
                 <MusiclistView
                     musiclist = { client.musiclist.clone() }
-                    pages = {    
-                        server.playlist.items.iter()
-                        .find(|item| item.playlist_id.clone_state() == client.musiclist.page.id.clone_state())
-                        .map(|playlist| playlist.pages.clone_state())
-                        .unwrap_or_default()  
-                    }
-                    youtube_player_video_id = { client.youtube_player.video_id.clone() }
+                    youtube_player_music_id = { client.youtube_player.music_id.clone() }
                 />          
             </div>
         </div>

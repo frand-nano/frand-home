@@ -1,0 +1,8 @@
+.vertical_div {
+    display:flex; 
+    flex-direction: column;
+}
+.horizontal_div {
+    display:flex; 
+    flex-direction: row;
+}

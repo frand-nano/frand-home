@@ -3,12 +3,12 @@ use yew::{function_component, html, Html, Properties};
 
 #[derive(Properties, PartialEq)]
 pub struct YoutubePlayerProperty {
-    pub video_id: ValueNode<String>,
+    pub music_id: ValueNode<String>,
 }
 
 #[function_component]
 pub fn YoutubePlayerView(prop: &YoutubePlayerProperty) -> Html {
-    let video_id = prop.video_id.value();
+    let video_id = prop.music_id.value();
 
     html! {
         <div>

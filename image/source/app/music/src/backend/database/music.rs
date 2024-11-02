@@ -1,16 +1,13 @@
-use awc::Client;
+
 use mysql::PooledConn;
 
-use crate::{backend::{config::Config, database::insert_update_music, youtube::get_playlist_items_all}, state::{client::musiclist::MusiclistItem, server::playlist::PlaylistId}};
+use crate::{backend::{database::insert_update_music, youtube::PlaylistItemsItem}, state::{client::musiclist::MusiclistItem, server::playlist::PlaylistId}};
 
 pub async fn insert_update_musics(
-    client: &Client,
-    config: &Config,
     conn: &mut PooledConn,
     playlist_id: &PlaylistId,
+    playlist_items: Vec<PlaylistItemsItem>,
 ) -> anyhow::Result<Vec<MusiclistItem::State>> {
-    let playlist_items = get_playlist_items_all(client, config, playlist_id).await?;
-
     let musics: Vec<MusiclistItem::State> = playlist_items.into_iter()
     .map(|item| MusiclistItem::State {        
         music_id: item.snippet.resource_id.video_id,

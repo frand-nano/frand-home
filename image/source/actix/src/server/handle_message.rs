@@ -17,8 +17,8 @@ impl Server {
                 }                 
             },
             App::Message::Server(message) => {
-                match self.users.get(&id) {
-                    Some(user) => if user.server_whitelist() {   
+                match (self.users.get(&id), self.senders.get(&id), self.client_nodes.get_mut(&id)) {
+                    (Some(user), Some(sender), Some(client_node)) => if user.server_whitelist() {   
                         log::info!("{user} 🔗 Server {}",
                             serde_json::to_string_pretty(&message).unwrap_or_default(),
                         );      
@@ -30,7 +30,9 @@ impl Server {
 
                         self.app.handle_server_message(
                             &self.senders, 
+                            sender,
                             &mut self.app_node.server, 
+                            client_node,
                             message,
                         ).await?;  
                     } else {

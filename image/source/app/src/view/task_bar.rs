@@ -14,9 +14,9 @@ pub fn TaskBarView(prop: &TaskBarProperty) -> Html {
 
     let user = if *user.authenticated.value() {
         html! {
-            <div style="display:flex; flex-direction: row;">
+            <div class="horizontal_div">
                 <img src={user.picture.value().clone()} />
-                <div style="display:flex; flex-direction: column;">
+                <div class="vertical_div">
                     <p>{user.name.value()}</p>
                     <p>{user.email.value()}</p>
                 </div>

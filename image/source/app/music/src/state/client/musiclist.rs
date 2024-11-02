@@ -7,6 +7,7 @@ use crate::state::server::playlist::PlaylistPage;
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Musiclist {
     pub page: PlaylistPage::State,
+    pub pages: Vec<PlaylistPage::State>,
     pub items: Vec<MusiclistItem::State>,
 }
 

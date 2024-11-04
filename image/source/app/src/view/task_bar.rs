@@ -14,23 +14,27 @@ pub fn TaskBarView(prop: &TaskBarProperty) -> Html {
 
     let user = if *user.authenticated.value() {
         html! {
-            <div class="horizontal_div">
+            <div id="task_bar_user" class="vertical">
                 <img src={user.picture.value().clone()} />
-                <div class="vertical_div">
-                    <p>{user.name.value()}</p>
-                    <p>{user.email.value()}</p>
-                </div>
+                //<p>{user.name.value()}</p>
+                //<p>{user.email.value()}</p>
             </div>
         }
     } else {
-        html! {
-            <a href="/login">
-                <input type="button" value="Login" />
-            </a>
+        let onclick = format!("location.href='{}'", user.login.value());
+        html! {    
+            <div id="task_bar_user">        
+                <button class="round" onClick={onclick}> {"Login"} </button>
+            </div>
         }
     };
 
     html! {
-        {user}
+        <div id="task_bar" class="horizontal bottom_line">
+            <nav>
+
+            </nav>
+            {user}
+        </div>
     }
 }

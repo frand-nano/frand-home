@@ -36,12 +36,12 @@ pub fn PlaylistView(prop: &PlaylistProperty) -> Html {
         };
 
         html! {
-            <div>   
-                <button disabled={item_update_value} onclick={onclick_item_update}> 
-                {"🔄"}
-                </button>
-                <button disabled={page_disabled} onclick={onclick_playlist}>
+            <div class="horizontal">   
+                <button class="fill_width" disabled={page_disabled} onclick={onclick_playlist}>
                 {youtube_title}
+                </button>
+                <button disabled={item_update_value} onclick={onclick_item_update}> 
+                {"🗘"}
                 </button>
             </div>
         }
@@ -50,15 +50,23 @@ pub fn PlaylistView(prop: &PlaylistProperty) -> Html {
     match visible_value {
         true => {
             html! {
-                <div class="vertical_div">                    
-                    <button onclick={onclick_visible}>{" < Playlist"}</button>
-                    {items}
+                <div id="playlist" class="vertical">                    
+                    <button onclick={onclick_visible}>
+                        {" < Playlist"}
+                    </button>
+                    <div id="playlist_items" class="vertical">        
+                        {items}
+                    </div>
                 </div>
             }
         },
         false => { 
-            html! {                 
-                <button onclick={onclick_visible}>{" > "}</button>
+            html! {            
+                <div id="playlist" style="width: 2rem" class="vertical">        
+                    <button onclick={onclick_visible}>
+                        {" > "}
+                    </button>
+                </div>
             } 
         },
     }

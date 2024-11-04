@@ -30,6 +30,7 @@ pub trait SessionUtil {
             self.user_id().parse().unwrap_or_default(),
             self.get_string("peer_ip"),
             self.picture(),
+            self.state(),
         )
     }
 }

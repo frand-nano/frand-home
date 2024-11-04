@@ -55,17 +55,18 @@ impl Music {
             &page,
         )?;
 
-        let music_id = items.first().map(|item| item.music_id.to_owned()).unwrap_or_default();
+        let music = items.first().map(|item| item.to_owned()).unwrap_or_default();
 
         Ok(MusicClient::State {
             playlist_visible: true,
             musiclist: Musiclist::State { 
+                visible: true,
                 page, 
                 pages, 
                 items, 
             },
             youtube_player: YoutubePlayer::State {
-                music_id,
+                music,
             },
             lyrics: Default::default(),
         })

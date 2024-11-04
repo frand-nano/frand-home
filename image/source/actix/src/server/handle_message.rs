@@ -72,7 +72,7 @@ impl Server {
                             self.senders.insert(id, sender.clone());      
     
                             let mut socket_state = self.app_node.clone_state();
-                            socket_state.client.user = user.clone().into();
+                            socket_state.client.user = user.clone().try_into()?;
 
                             let mut client_node = self.app_node.client.clone();
                             client_node.apply_state(socket_state.client.clone());

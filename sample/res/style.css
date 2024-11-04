@@ -1,8 +1,125 @@
-.vertical_div {
+body {
+    background-color: #111111;
+    color: #cccccc;
+    margin: 0;
+    height: 100vh;
+}
+
+#task_bar {
+    background-color: #111111;
+    position: fixed;
+    width: 100%;
+    height: 3rem;
+    display: flex;
+    justify-content: space-between;
+    z-index: 1;
+}
+
+#task_bar_user > img {
+    height: 2.6rem;
+    width: 2.6rem;
+    margin: 0.2rem;
+}
+
+#content {
+    height: 100%;
+}
+
+#content > div {
+    padding-top: 3rem;    
+}
+
+button:hover {
+    background: #888888;
+}
+
+button {
+    margin: 0.2rem;
+    font-weight: bold;
+    cursor: pointer;    
+    border: none;
+    background-color: #111111;
+    color: #cccccc;
+    overflow: hidden;
+}
+
+#left {
+    margin: 0.2rem;
+}
+
+#playlist {
+    width: 10rem;
+}
+
+#playlist_items > div {
+    border-bottom: 1px solid #555555;
+    margin: 0;
+    height: 2.5rem;
+}
+
+#center {
+    width: 100%;
+    margin: 0.2rem;
+}
+
+#youtube_player > p {
+    display: flex;
+    justify-content: space-around;
+}
+
+#youtube_player_container {
+    position: relative;
+    padding-bottom: 56.25%;
+    padding-top: 30px;
+    height: 0;
+}
+
+#right {
+    margin: 0.2rem;
+}
+
+#musiclist {
+    width: 20rem;
+}
+
+#musiclist_items > button {
+    margin: 0;
+    height: 2.5rem;
+}
+
+#musiclist_items > div {
+    border-bottom: 1px solid #555555;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+    height: 1px;
+}
+
+.bottom_line {
+    border-bottom: 2px solid #888888;
+}
+.left_line {
+    border-left: 2px solid #888888;
+}
+.right_line {
+    border-right: 2px solid #888888;
+}
+.vertical {
     display:flex; 
     flex-direction: column;
 }
-.horizontal_div {
+.horizontal {
     display:flex; 
     flex-direction: row;
+}
+.fill_width {
+    width: 100%;
+}
+.round {
+    height: 2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 1rem;
+    border-radius: 1rem;
 }

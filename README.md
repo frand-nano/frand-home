@@ -84,7 +84,7 @@ pub fn view(
 ) -> Html {
     // View들에 필요한 Node 들을 배분
     html! {
-        <div class="horizontal_div">
+        <div class="horizontal">
             <PlaylistView 
                 visible = { client.playlist_visible.clone() }
                 playlist = { server.playlist.clone() }

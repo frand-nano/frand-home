@@ -20,24 +20,28 @@ pub fn view(
     client: &MusicClient::Node,
 ) -> Html {
     html! {
-        <div class="horizontal_div">
-            <PlaylistView 
-                visible = { client.playlist_visible.clone() }
-                playlist = { server.playlist.clone() }
-                playlist_page = { client.musiclist.page.clone() }
-            />
-            <div>
+        <div class="horizontal">
+            <div id="left" class="vertical">
+                <PlaylistView 
+                    visible = { client.playlist_visible.clone() }
+                    playlist = { server.playlist.clone() }
+                    playlist_page = { client.musiclist.page.clone() }
+                />
+            </div>
+            <div class="right_line" />
+            <div id="center" class="vertical">
                 <YoutubePlayerView
-                    music_id = { client.youtube_player.music_id.clone() }
+                    youtube_player = { client.youtube_player.clone() }
                 />
                 <LyricsView/>
             </div>
-            <div>
+            <div class="left_line" />
+            <div id="right" class="vertical">
                 <ServerPlayerView/>        
                 <MusicQueueView/>    
                 <MusiclistView
                     musiclist = { client.musiclist.clone() }
-                    youtube_player_music_id = { client.youtube_player.music_id.clone() }
+                    youtube_player_music = { client.youtube_player.music.clone() }
                 />          
             </div>
         </div>

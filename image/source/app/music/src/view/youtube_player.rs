@@ -1,22 +1,26 @@
-use frand_home_node::ValueNode;
 use yew::{function_component, html, Html, Properties};
+use crate::state::client::youtube_player::YoutubePlayer;
 
 #[derive(Properties, PartialEq)]
 pub struct YoutubePlayerProperty {
-    pub music_id: ValueNode<String>,
+    pub youtube_player: YoutubePlayer::Node,
 }
 
 #[function_component]
 pub fn YoutubePlayerView(prop: &YoutubePlayerProperty) -> Html {
-    let video_id = prop.music_id.value();
+    let title = prop.youtube_player.music.youtube_title.value();
+    let music_id = prop.youtube_player.music.music_id.value();
 
     html! {
-        <div>
-            <p>{"YoutubePlayer"}</p>
-            <object 
-                type="text/html" 
-                data={format!("//www.youtube.com/embed/{video_id}")}
-            />
+        <div id="youtube_player">
+            <p> {title} </p>
+            <div id="youtube_player_container">
+                <object 
+                    type="text/html" 
+                    data={format!("//www.youtube.com/embed/{music_id}")}
+                    style="position:absolute; top:0; left:0; width: 100%; height: 100%;"
+                />
+            </div>
         </div>
     }
 }

@@ -7,6 +7,7 @@ pub struct User {
     pub name: String,
     pub email: String,
     pub picture: String,
+    pub login: String,
     pub authenticated: bool,
     pub server_whitelist: bool,
     pub client_whitelist: bool,
